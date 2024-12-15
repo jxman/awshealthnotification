@@ -1,6 +1,6 @@
 # Provider configuration
 provider "aws" {
-  region = "us-east-1" # or your preferred region
+  region = var.aws_region # This will now use us-east-1
 }
 
 # SNS Topic
