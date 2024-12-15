@@ -50,16 +50,18 @@ jobs:
       - name: Create tfvars file
         run: |
           cat > terraform.tfvars << EOF
-          aws_region = "${{ env.AWS_REGION }}"
-          email_address = "${{ secrets.NOTIFICATION_EMAIL }}"
-          terraform_state_bucket = "${{ secrets.TF_STATE_BUCKET }}"
-          terraform_state_key = "health-notifications/terraform.tfstate"
+          aws_region                     = "${{ env.AWS_REGION }}"
+          email_address                  = "${{ secrets.NOTIFICATION_EMAIL }}"
+          terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
+          terraform_state_key            = "health-notifications/terraform.tfstate"
           terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
           EOF
 
       - name: Terraform Format
         id: fmt
-        run: terraform fmt -check
+        run: |
+          terraform fmt
+          terraform fmt -check
         continue-on-error: true
 
       - name: Terraform Init
