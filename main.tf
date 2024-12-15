@@ -28,11 +28,12 @@ resource "aws_sns_topic_policy" "default" {
   })
 }
 
-# Email Subscription
-resource "aws_sns_topic_subscription" "email" {
+# Email Subscriptions
+resource "aws_sns_topic_subscription" "email_subscriptions" {
+  count     = length(var.email_addresses)
   topic_arn = aws_sns_topic.health_events.arn
   protocol  = "email"
-  endpoint  = var.email_address
+  endpoint  = var.email_addresses[count.index]
 }
 
 # EventBridge Rule
