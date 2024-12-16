@@ -1,6 +1,6 @@
 # Provider configuration
 provider "aws" {
-  region = var.aws_region # This will now use us-east-1
+  region = var.aws_region
 }
 
 # SNS Topic
@@ -17,11 +17,12 @@ resource "aws_sns_topic_policy" "default" {
     Version = "2012-10-17"
     Statement = [
       {
+        Sid    = "AllowEventBridgePublish"
         Effect = "Allow"
         Principal = {
           Service = "events.amazonaws.com"
         }
-        Action   = "SNS:Publish"
+        Action   = "sns:Publish"
         Resource = aws_sns_topic.health_events.arn
       }
     ]
@@ -34,6 +35,13 @@ resource "aws_sns_topic_subscription" "email_subscriptions" {
   topic_arn = aws_sns_topic.health_events.arn
   protocol  = "email"
   endpoint  = var.email_addresses[count.index]
+
+  lifecycle {
+    ignore_changes = [
+      # Ignore changes to subscription status as it's managed outside Terraform
+      pending_confirmation
+    ]
+  }
 }
 
 # EventBridge Rule
@@ -89,29 +97,4 @@ resource "aws_cloudwatch_event_target" "sns" {
 }
 EOF
   }
-}
-
-# Add EventBridge permission to publish to SNS
-resource "aws_sns_topic_policy" "allow_eventbridge" {
-  arn = aws_sns_topic.health_events.arn
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "AllowEventBridgePublish"
-        Effect = "Allow"
-        Principal = {
-          Service = "events.amazonaws.com"
-        }
-        Action   = "sns:Publish"
-        Resource = aws_sns_topic.health_events.arn
-        Condition = {
-          StringEquals = {
-            "AWS:SourceArn" : aws_cloudwatch_event_rule.health_events.arn
-          }
-        }
-      }
-    ]
-  })
 }
