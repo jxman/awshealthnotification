@@ -79,14 +79,18 @@ jobs:
         id: plan
         run: |
           # Generate plan
-          terraform plan -input=false -no-color -out=tfplan.binary
+          terraform plan -input=false -no-color -out=plan.tfplan
 
           # Save plan output for PR comment
-          terraform show -no-color tfplan.binary > tfplan.txt
+          terraform show -no-color plan.tfplan > plan.txt
+
+          # Debug: List files
+          echo "Checking files after plan:"
+          ls -la
 
           # Save plan output for environment
           echo "PLAN<<EOF" >> $GITHUB_ENV
-          cat tfplan.txt >> $GITHUB_ENV
+          cat plan.txt >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
           # Add a status based on the plan outcome
@@ -127,8 +131,8 @@ jobs:
         with:
           name: terraform-plan
           path: |
-            tfplan.binary
-            tfplan.txt
+            plan.tfplan
+            plan.txt
             /tmp/infracost.json
           retention-days: 1
 
@@ -210,10 +214,18 @@ jobs:
         with:
           name: terraform-plan
 
+      - name: Debug Downloaded Files
+        run: |
+          echo "Current directory contents:"
+          ls -la
+          echo "File types:"
+          file *
+
       - name: Terraform Apply
         run: |
-          # Verify the plan file exists
-          ls -la
+          # Verify the plan file exists and show its details
+          ls -la plan.tfplan
+          file plan.tfplan
 
           # Apply the saved plan
-          terraform apply -auto-approve tfplan.binary
+          terraform apply -auto-approve plan.tfplan
