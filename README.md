@@ -1,6 +1,29 @@
 # AWS Health Events Notification System
 
-This Terraform configuration sets up an automated notification system for AWS Health Events. The system captures AWS Health Events and forwards them to multiple email addresses through SNS in a readable format.
+An automated notification system that monitors AWS Health Events and sends notifications via SNS.
+
+## Author
+
+**John Xanthopoulos**
+
+- GitHub: [jxman](https://github.com/jxman)
+
+## Version
+
+- Current Version: 1.0.0
+- Last Updated: December 2024
+- Initial Release: December 2024
+
+## Changelog
+
+### 1.0.0 (2024-12-16)
+
+- Initial release with core functionality:
+  - AWS Health Events monitoring setup
+  - SNS notification system with multi-email support
+  - Terraform configuration with state management
+  - GitHub Actions CI/CD pipeline with plan approval workflow
+  - Comprehensive documentation and testing guide
 
 ## Architecture
 
@@ -9,6 +32,8 @@ The solution uses the following AWS services:
 - Amazon EventBridge (CloudWatch Events) to capture AWS Health Events
 - Amazon SNS to send email notifications
 - IAM roles and policies for service integration
+- S3 bucket for Terraform state management
+- DynamoDB table for state locking
 
 ## Prerequisites
 
@@ -27,11 +52,11 @@ health-notifications/
 ├── variables.tf      # Variable definitions
 ├── outputs.tf        # Output definitions
 ├── versions.tf       # Provider and terraform version constraints
-├── terraform.tfvars  # Variable values (git-ignored)
-└── .gitignore
+├── .gitignore       # Git ignore file
+└── .github/         # GitHub Actions workflows
 ```
 
-## Configuration
+## Local Configuration
 
 1. Clone this repository:
 
@@ -40,7 +65,17 @@ git clone <repository-url>
 cd health-notifications
 ```
 
-2. Create a `terraform.tfvars` file with your configuration:
+2. Create a `backend.hcl` file (do not commit this file):
+
+```hcl
+bucket         = "your-terraform-state-bucket"
+key            = "health-notifications/terraform.tfstate"
+region         = "us-east-1"
+dynamodb_table = "your-terraform-lock-table"
+encrypt        = true
+```
+
+3. Create a `terraform.tfvars` file (do not commit this file):
 
 ```hcl
 aws_region                     = "us-east-1"
@@ -50,25 +85,23 @@ terraform_state_key            = "health-notifications/terraform.tfstate"
 terraform_state_dynamodb_table = "your-terraform-lock-table"
 ```
 
-3. Initialize Terraform with backend configuration:
+4. Initialize Terraform with backend configuration:
 
 ```bash
 terraform init -backend-config=backend.hcl
 ```
 
-4. Review the planned changes:
+5. Review the planned changes:
 
 ```bash
 terraform plan
 ```
 
-5. Apply the configuration:
+6. Apply the configuration:
 
 ```bash
 terraform apply
 ```
-
-6. Each email address will receive a confirmation email that must be confirmed to receive notifications.
 
 ## GitHub Actions Configuration
 
@@ -79,6 +112,23 @@ The repository includes a GitHub Actions workflow that automates the deployment 
 - `TF_STATE_BUCKET`: S3 bucket name for Terraform state
 - `TF_STATE_LOCK_TABLE`: DynamoDB table name for state locking
 - `NOTIFICATION_EMAILS`: JSON array of email addresses (e.g., `["email1@example.com", "email2@example.com"]`)
+
+### Setting up GitHub Secrets
+
+1. Go to your GitHub repository
+2. Navigate to Settings > Secrets and variables > Actions
+3. Add the required secrets listed above
+
+### Workflow Process
+
+The GitHub Actions workflow will:
+
+1. Run Terraform format check
+2. Initialize Terraform
+3. Validate the configuration
+4. Create a plan
+5. Require approval before apply (on main branch)
+6. Apply changes after approval
 
 ## Testing
 
@@ -135,24 +185,6 @@ To remove all created resources:
 terraform destroy
 ```
 
-## Customization
-
-You can customize the notification format by modifying the `input_template` in `main.tf`. The template supports the following fields:
-
-- Event Source
-- Event Type
-- Event ARN
-- Time Detected
-- Start Time
-- End Time
-- Region
-- Account
-- Service Affected
-- Event Type Code
-- Category
-- Status
-- Description
-
 ## Troubleshooting
 
 1. **No confirmation emails received:**
@@ -167,16 +199,24 @@ You can customize the notification format by modifying the `input_template` in `
    - Check the EventBridge rule is enabled
    - Verify the IAM permissions are correct
 
-3. **Error during terraform apply:**
+3. **GitHub Actions issues:**
 
-   - Ensure your AWS credentials have appropriate permissions
-   - Verify the region setting in provider configuration
-   - Check for any resource naming conflicts
-
-4. **GitHub Actions issues:**
    - Verify all required secrets are set correctly
    - Check the workflow logs for specific error messages
    - Ensure the NOTIFICATION_EMAILS secret is a valid JSON array
+
+4. **State management issues:**
+   - Verify your backend.hcl configuration
+   - Check S3 bucket and DynamoDB table permissions
+   - Ensure the state file path is correct
+
+## Security Notes
+
+- Never commit backend.hcl or terraform.tfvars files
+- Keep AWS credentials secure and rotate them regularly
+- Use IAM roles with minimum required permissions
+- Enable S3 bucket encryption for state files
+- Enable DynamoDB encryption for state locking
 
 ## Contributing
 
@@ -188,4 +228,24 @@ You can customize the notification format by modifying the `input_template` in `
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License
+
+Copyright (c) 2024 John Xanthopoulos
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
