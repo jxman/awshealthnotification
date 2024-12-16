@@ -10,6 +10,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  id-token: write
 
 env:
   TF_LOG: INFO
@@ -17,9 +18,11 @@ env:
   TERRAFORM_VERSION: "1.7.0"
 
 jobs:
-  terraform:
-    name: "Terraform"
+  plan:
+    name: "Terraform Plan"
     runs-on: ubuntu-22.04
+    outputs:
+      tfplanExitCode: ${{ steps.plan.outputs.exitcode }}
 
     steps:
       - name: Checkout repository
@@ -74,12 +77,33 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        if: github.event_name == 'pull_request'
         run: |
-          terraform plan -no-color -input=false | tee plan.txt
+          terraform plan -no-color -input=false -out=tfplan | tee plan.txt
           echo "PLAN<<EOF" >> $GITHUB_ENV
           cat plan.txt >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
+
+          # Save plan output for PR comment
+          echo "${{ env.PLAN }}" > plan_output.txt
+
+          # Add a status based on the plan outcome
+          planExitCode=${PIPESTATUS[0]}
+          echo "exitcode=$planExitCode" >> "$GITHUB_OUTPUT"
+          if [ $planExitCode -eq 0 ]; then
+            echo "Plan succeeded"
+          else
+            echo "Plan failed"
+            exit 1
+          fi
+
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: tfplan
+          path: |
+            tfplan
+            plan_output.txt
+          retention-days: 1
 
       - name: Update Pull Request
         uses: actions/github-script@v7
@@ -108,10 +132,56 @@ jobs:
               body: output
             })
 
-      - name: Terraform Plan Status
-        if: steps.plan.outcome == 'failure'
-        run: exit 1
+  apply:
+    name: "Terraform Apply"
+    needs: plan
+    runs-on: ubuntu-22.04
+    environment: production
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Create backend config
+        run: |
+          cat > backend.hcl << EOF
+          bucket         = "${{ secrets.TF_STATE_BUCKET }}"
+          key            = "health-notifications/terraform.tfstate"
+          region         = "${{ env.AWS_REGION }}"
+          dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
+          encrypt        = true
+          EOF
+
+      - name: Create tfvars file
+        run: |
+          cat > terraform.tfvars << EOF
+          aws_region                     = "${{ env.AWS_REGION }}"
+          email_addresses                = ${{ secrets.NOTIFICATION_EMAILS }}
+          terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
+          terraform_state_key            = "health-notifications/terraform.tfstate"
+          terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
+          EOF
+
+      - name: Terraform Init
+        run: terraform init -backend-config=backend.hcl
+
+      - name: Download Plan Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: tfplan
 
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -auto-approve -input=false
+        run: terraform apply -auto-approve tfplan
