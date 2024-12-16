@@ -78,13 +78,16 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: |
-          terraform plan -no-color -input=false -out=tfplan | tee plan.txt
-          echo "PLAN<<EOF" >> $GITHUB_ENV
-          cat plan.txt >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          # Generate plan
+          terraform plan -input=false -no-color -out=tfplan.binary
 
           # Save plan output for PR comment
-          echo "${{ env.PLAN }}" > plan_output.txt
+          terraform show -no-color tfplan.binary > tfplan.txt
+
+          # Save plan output for environment
+          echo "PLAN<<EOF" >> $GITHUB_ENV
+          cat tfplan.txt >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
           # Add a status based on the plan outcome
           planExitCode=${PIPESTATUS[0]}
@@ -122,10 +125,10 @@ jobs:
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tfplan
+          name: terraform-plan
           path: |
-            tfplan
-            plan_output.txt
+            tfplan.binary
+            tfplan.txt
             /tmp/infracost.json
           retention-days: 1
 
@@ -160,7 +163,7 @@ jobs:
     name: "Terraform Apply"
     needs: plan
     runs-on: ubuntu-22.04
-    environment: production # This enables the manual approval
+    environment: production
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
@@ -205,7 +208,12 @@ jobs:
       - name: Download Plan Artifact
         uses: actions/download-artifact@v4
         with:
-          name: tfplan
+          name: terraform-plan
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
+        run: |
+          # Verify the plan file exists
+          ls -la
+
+          # Apply the saved plan
+          terraform apply -auto-approve tfplan.binary
