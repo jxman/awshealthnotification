@@ -5,7 +5,7 @@ on:
     branches: ["main"]
   pull_request:
     branches: ["main"]
-  workflow_dispatch: # This line enables manual triggers
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -51,7 +51,7 @@ jobs:
         run: |
           cat > terraform.tfvars << EOF
           aws_region                     = "${{ env.AWS_REGION }}"
-          email_address                  = "${{ secrets.NOTIFICATION_EMAIL }}"
+          email_addresses                = ["${{ secrets.NOTIFICATION_EMAILS }}"]
           terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
           terraform_state_key            = "health-notifications/terraform.tfstate"
           terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
