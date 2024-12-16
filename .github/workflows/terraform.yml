@@ -103,29 +103,6 @@ jobs:
             exit 1
           fi
 
-      - name: Install Infracost
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
-          infracost --version
-
-      - name: Generate Infracost Cost Estimate
-        env:
-          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
-        run: |
-          infracost breakdown --path . \
-            --format json \
-            --out-file /tmp/infracost.json \
-            --terraform-plan-flags "-var-file=terraform.tfvars"
-
-      - name: Post Infracost Comment
-        if: github.event_name == 'pull_request'
-        run: |
-          infracost comment github --path /tmp/infracost.json \
-            --repo $GITHUB_REPOSITORY \
-            --github-token ${{ secrets.GITHUB_TOKEN }} \
-            --pull-request ${{ github.event.pull_request.number }} \
-            --behavior update
-
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -133,7 +110,6 @@ jobs:
           path: |
             plan.tfplan
             plan.txt
-            /tmp/infracost.json
           retention-days: 1
 
       - name: Update Pull Request
