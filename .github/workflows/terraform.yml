@@ -51,7 +51,7 @@ jobs:
         run: |
           cat > terraform.tfvars << EOF
           aws_region                     = "${{ env.AWS_REGION }}"
-          email_addresses                = ["${{ secrets.NOTIFICATION_EMAILS }}"]
+          email_addresses                = ${{ secrets.NOTIFICATION_EMAILS }}
           terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
           terraform_state_key            = "health-notifications/terraform.tfstate"
           terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
