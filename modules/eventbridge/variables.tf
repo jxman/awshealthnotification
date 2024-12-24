@@ -7,3 +7,9 @@ variable "sns_topic_arn" {
   description = "ARN of the SNS topic for notifications"
   type        = string
 }
+
+variable "tags" {
+  description = "Resource tags"
+  type        = map(string)
+  default     = {}
+}
