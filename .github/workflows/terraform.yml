@@ -24,10 +24,20 @@ jobs:
   plan:
     name: "Terraform Plan"
     runs-on: ubuntu-22.04
-    env:
-      ENVIRONMENT: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'prod' }}
 
     steps:
+      - name: Set Environment
+        id: setenv
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "ENVIRONMENT=${{ inputs.environment }}" >> $GITHUB_ENV
+          else
+            echo "ENVIRONMENT=prod" >> $GITHUB_ENV
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Check Required Files
         run: |
           cd environments/${{ env.ENVIRONMENT }}
