@@ -8,36 +8,37 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "Environment to deploy"
-        required: true
-        default: "prod"
         type: choice
+        description: "Select environment"
         options:
           - prod
           - dev
+        required: true
+        default: "prod"
 
 permissions:
   contents: read
   pull-requests: write
-  id-token: write
-
-env:
-  TF_LOG: INFO
-  AWS_REGION: "us-east-1"
-  TERRAFORM_VERSION: "1.7.0"
-  ENVIRONMENT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'prod' }}
 
 jobs:
   plan:
     name: "Terraform Plan"
     runs-on: ubuntu-22.04
-    defaults:
-      run:
-        working-directory: environments/${{ env.ENVIRONMENT }}
-    outputs:
-      tfplanExitCode: ${{ steps.plan.outputs.exitcode }}
+    env:
+      ENVIRONMENT: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'prod' }}
 
     steps:
+      - name: Check Required Files
+        run: |
+          cd environments/${{ env.ENVIRONMENT }}
+          if [ ! -f "main.tf" ]; then
+            echo "main.tf not found in environments/${{ env.ENVIRONMENT }}"
+            exit 1
+          fi
+          if [ ! -f "variables.tf" ]; then
+            echo "variables.tf not found in environments/${{ env.ENVIRONMENT }}"
+            exit 1
+          fi
       - name: Checkout repository
         uses: actions/checkout@v4
 
