@@ -24,6 +24,7 @@ An automated notification system that monitors AWS Health Events and sends notif
   - Terraform configuration with state management
   - GitHub Actions CI/CD pipeline with plan approval workflow
   - Comprehensive documentation and testing guide
+  - Modular infrastructure design with environment support
 
 ## Architecture
 
@@ -48,12 +49,29 @@ The solution uses the following AWS services:
 ```
 health-notifications/
 ├── README.md
-├── main.tf           # Main infrastructure configuration
-├── variables.tf      # Variable definitions
-├── outputs.tf        # Output definitions
-├── versions.tf       # Provider and terraform version constraints
-├── .gitignore       # Git ignore file
-└── .github/         # GitHub Actions workflows
+├── modules/
+│   ├── eventbridge/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   └── sns/
+│       ├── main.tf
+│       ├── variables.tf
+│       └── outputs.tf
+├── environments/
+│   ├── dev/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── terraform.tfvars
+│   └── prod/
+│       ├── main.tf
+│       ├── variables.tf
+│       └── terraform.tfvars
+├── backend/
+│   ├── dev.hcl
+│   └── prod.hcl
+└── .github/
+    └── workflows/
 ```
 
 ## Local Configuration
@@ -65,43 +83,58 @@ git clone <repository-url>
 cd health-notifications
 ```
 
-2. Create a `backend.hcl` file (do not commit this file):
+2. Create environment-specific backend config (do not commit):
 
 ```hcl
+# backend/prod.hcl
 bucket         = "your-terraform-state-bucket"
-key            = "health-notifications/terraform.tfstate"
+key            = "health-notifications/prod/terraform.tfstate"
 region         = "us-east-1"
 dynamodb_table = "your-terraform-lock-table"
 encrypt        = true
 ```
 
-3. Create a `terraform.tfvars` file (do not commit this file):
+3. Create environment-specific tfvars (do not commit):
 
 ```hcl
+# environments/prod/terraform.tfvars
 aws_region                     = "us-east-1"
+environment                    = "prod"
 email_addresses                = ["email1@example.com", "email2@example.com"]
 terraform_state_bucket         = "your-terraform-state-bucket"
-terraform_state_key            = "health-notifications/terraform.tfstate"
+terraform_state_key            = "health-notifications/prod/terraform.tfstate"
 terraform_state_dynamodb_table = "your-terraform-lock-table"
 ```
 
-4. Initialize Terraform with backend configuration:
+4. Use the initialization script:
 
 ```bash
-terraform init -backend-config=backend.hcl
+./init.sh prod  # or ./init.sh dev
 ```
 
-5. Review the planned changes:
+5. Use the deployment script:
 
 ```bash
-terraform plan
+./deploy.sh prod  # or ./deploy.sh dev
 ```
 
-6. Apply the configuration:
+## Modules
 
-```bash
-terraform apply
-```
+### SNS Module
+
+The SNS module manages notification infrastructure:
+
+- Creates environment-specific SNS topics
+- Manages email subscriptions
+- Configures topic policies for EventBridge integration
+
+### EventBridge Module
+
+The EventBridge module handles event processing:
+
+- Creates environment-specific rules
+- Configures event patterns for Health events
+- Manages target configuration and message formatting
 
 ## GitHub Actions Configuration
 
@@ -118,16 +151,24 @@ The repository includes a GitHub Actions workflow that automates the deployment 
 1. Go to your GitHub repository
 2. Navigate to Settings > Secrets and variables > Actions
 3. Add the required secrets listed above
+4. Configure environment protection rules for 'dev' and 'prod'
+
+### Workflow Features
+
+- Environment-specific deployments (dev/prod)
+- Manual workflow trigger with environment selection
+- Separate state files per environment
+- Environment-specific approvals
+- Recursive format checking
+- Modular resource management
 
 ### Workflow Process
 
-The GitHub Actions workflow will:
-
-1. Run Terraform format check
-2. Initialize Terraform
+1. Run Terraform format check (recursively through modules)
+2. Initialize Terraform with environment-specific backend
 3. Validate the configuration
 4. Create a plan
-5. Require approval before apply (on main branch)
+5. Require environment-specific approval
 6. Apply changes after approval
 
 ## Testing
@@ -136,7 +177,7 @@ To test the notification system:
 
 1. Go to the AWS EventBridge console
 2. Navigate to 'Rules'
-3. Select the 'health-event-notifications' rule
+3. Select the '{env}-health-event-notifications' rule
 4. Click 'Test pattern'
 5. Use this sample event:
 
@@ -182,7 +223,7 @@ After applying the configuration, you'll see these outputs:
 To remove all created resources:
 
 ```bash
-terraform destroy
+./deploy.sh prod destroy  # or ./deploy.sh dev destroy
 ```
 
 ## Troubleshooting
@@ -217,6 +258,7 @@ terraform destroy
 - Use IAM roles with minimum required permissions
 - Enable S3 bucket encryption for state files
 - Enable DynamoDB encryption for state locking
+- Use environment-specific approvals in GitHub Actions
 
 ## Contributing
 
