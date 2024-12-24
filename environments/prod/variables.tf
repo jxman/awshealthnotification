@@ -35,6 +35,5 @@ variable "tags" {
   default = {
     Environment = "prod"
     Service     = "aws-health-notifications"
-    Testing     = "true"
   }
 }
