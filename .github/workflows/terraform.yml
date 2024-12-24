@@ -3,8 +3,16 @@ name: "Terraform CI/CD"
 on:
   push:
     branches: ["main"]
+    paths:
+      - "environments/**"
+      - "modules/**"
+      - ".github/workflows/**"
   pull_request:
     branches: ["main"]
+    paths:
+      - "environments/**"
+      - "modules/**"
+      - ".github/workflows/**"
   workflow_dispatch:
     inputs:
       environment:
@@ -16,15 +24,31 @@ on:
         required: true
         default: "prod"
 
-permissions:
-  contents: read
-  pull-requests: write
-
 jobs:
-  plan:
-    name: "Terraform Plan"
+  determine_environment:
     runs-on: ubuntu-22.04
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+    steps:
+      - id: set-env
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" =~ ^refs/heads/feat/.*-prod$ ]]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" =~ ^refs/heads/feat/.*-dev$ ]]; then
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          else
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          fi
 
+  plan:
+    needs: determine_environment
+    runs-on: ubuntu-22.04
+    environment: ${{ needs.determine_environment.outputs.environment }}
+    defaults:
+      run:
+        working-directory: environments/${{ needs.determine_environment.outputs.environment }}
     steps:
       - name: Set Environment
         id: setenv
@@ -157,14 +181,13 @@ jobs:
             })
 
   apply:
-    name: "Terraform Apply"
-    needs: plan
+    needs: [determine_environment, plan]
     runs-on: ubuntu-22.04
-    environment: ${{ env.ENVIRONMENT }}
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: ${{ needs.determine_environment.outputs.environment }}
     defaults:
       run:
-        working-directory: environments/${{ env.ENVIRONMENT }}
+        working-directory: environments/${{ needs.determine_environment.outputs.environment }}
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
       - name: Checkout repository
