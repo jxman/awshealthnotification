@@ -1,6 +1,7 @@
 resource "aws_sns_topic" "health_events" {
   name         = "${var.environment}-health-event-notifications"
   display_name = "AWS Health Events - ${var.environment}"
+  tags         = var.tags
 }
 
 resource "aws_sns_topic_policy" "default" {
