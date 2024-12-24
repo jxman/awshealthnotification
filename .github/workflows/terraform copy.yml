@@ -1,0 +1,282 @@
+name: "Terraform CI/CD"
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TF_LOG: INFO
+  AWS_REGION: "us-east-1"
+  TERRAFORM_VERSION: "1.7.0"
+  TF_STATE_PATH: "health-notifications/terraform.tfstate"
+  TF_WORKSPACE: "production"
+  PLAN_FILE: "plan.tfplan"
+  PLAN_TXT: "plan.txt"
+  ARTIFACT_NAME: "terraform-plan"
+  ARTIFACT_RETENTION_DAYS: "1"
+
+jobs:
+  plan:
+    name: "Terraform Plan"
+    runs-on: ubuntu-22.04
+    outputs:
+      tfplanExitCode: ${{ steps.plan.outputs.exitcode }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Check AWS Credentials
+        run: |
+          if ! aws sts get-caller-identity &>/dev/null; then
+            echo "AWS credentials validation failed"
+            exit 1
+          fi
+
+      - name: Verify Terraform Configuration
+        run: |
+          if [ ! -f "main.tf" ]; then
+            echo "main.tf not found"
+            exit 1
+          fi
+          if [ ! -f "variables.tf" ]; then
+            echo "variables.tf not found"
+            exit 1
+          fi
+
+      - name: Create backend config
+        run: |
+          cat > backend.hcl << EOF
+          bucket         = "${{ secrets.TF_STATE_BUCKET }}"
+          key            = "${{ env.TF_STATE_PATH }}"
+          region         = "${{ env.AWS_REGION }}"
+          dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
+          encrypt        = true
+          EOF
+
+      - name: Create tfvars file
+        run: |
+          cat > terraform.tfvars << EOF
+          aws_region                     = "${{ env.AWS_REGION }}"
+          email_addresses                = ${{ secrets.NOTIFICATION_EMAILS }}
+          terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
+          terraform_state_key            = "${{ env.TF_STATE_PATH }}"
+          terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
+          EOF
+
+      - name: Terraform Format
+        id: fmt
+        run: |
+          terraform fmt
+          terraform fmt -check
+        continue-on-error: true
+
+      - name: Terraform Init
+        id: init
+        run: terraform init -backend-config=backend.hcl
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          # Set detailed logging
+          export TF_LOG=DEBUG
+
+          # Generate plan
+          terraform plan -input=false -no-color -out=${{ env.PLAN_FILE }} | tee plan_output.txt
+
+          # Show and save plan details
+          echo "Plan Details:"
+          terraform show -no-color ${{ env.PLAN_FILE }} > ${{ env.PLAN_TXT }}
+
+          # Debug: List files
+          echo "Checking files after plan:"
+          ls -la
+
+          # Save plan output for environment
+          echo "PLAN<<EOF" >> $GITHUB_ENV
+          cat ${{ env.PLAN_TXT }} >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+          # Add a status based on the plan outcome
+          planExitCode=${PIPESTATUS[0]}
+          echo "exitcode=$planExitCode" >> "$GITHUB_OUTPUT"
+          if [ $planExitCode -eq 0 ]; then
+            echo "Plan succeeded"
+          else
+            echo "Plan failed"
+            exit 1
+          fi
+
+      - name: Clean Old Comments
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.name,
+              issue_number: context.issue.number,
+            });
+
+            for (const comment of comments) {
+              if (comment.body.includes('Terraform Format and Style')) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.name,
+                  comment_id: comment.id,
+                });
+              }
+            }
+
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: |
+            ${{ env.PLAN_FILE }}
+            ${{ env.PLAN_TXT }}
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+
+      - name: Update Pull Request
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "${{ env.PLAN }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+            #### Terraform Plan 📖
+            <details><summary>Show Plan</summary>
+
+            \`\`\`hcl
+            ${process.env.PLAN}
+            \`\`\`
+
+            </details>`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.name,
+              body: output
+            })
+
+      - name: Job Summary
+        run: |
+          echo "### Terraform Plan Summary 📋" >> $GITHUB_STEP_SUMMARY
+          echo "* Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "* Environment: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'production' || 'development' }}" >> $GITHUB_STEP_SUMMARY
+          echo "* Status: ${{ steps.plan.outcome }}" >> $GITHUB_STEP_SUMMARY
+
+  apply:
+    name: "Terraform Apply"
+    needs: plan
+    runs-on: ubuntu-22.04
+    environment: production
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Check AWS Credentials
+        run: |
+          if ! aws sts get-caller-identity &>/dev/null; then
+            echo "AWS credentials validation failed"
+            exit 1
+          fi
+
+      - name: Create backend config
+        run: |
+          cat > backend.hcl << EOF
+          bucket         = "${{ secrets.TF_STATE_BUCKET }}"
+          key            = "${{ env.TF_STATE_PATH }}"
+          region         = "${{ env.AWS_REGION }}"
+          dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
+          encrypt        = true
+          EOF
+
+      - name: Create tfvars file
+        run: |
+          cat > terraform.tfvars << EOF
+          aws_region                     = "${{ env.AWS_REGION }}"
+          email_addresses                = ${{ secrets.NOTIFICATION_EMAILS }}
+          terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
+          terraform_state_key            = "${{ env.TF_STATE_PATH }}"
+          terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
+          EOF
+
+      - name: Terraform Init
+        run: terraform init -backend-config=backend.hcl
+
+      - name: Download Plan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+
+      - name: Debug Downloaded Files
+        run: |
+          echo "Current directory contents:"
+          ls -la
+          echo "File types:"
+          file *
+
+      - name: Terraform Apply
+        run: |
+          # Verify the plan file exists and show its details
+          ls -la ${{ env.PLAN_FILE }}
+          file ${{ env.PLAN_FILE }}
+
+          # Apply the saved plan
+          terraform apply -auto-approve ${{ env.PLAN_FILE }}
+
+      - name: Job Summary
+        run: |
+          echo "### Terraform Apply Summary 📋" >> $GITHUB_STEP_SUMMARY
+          echo "* Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "* Environment: production" >> $GITHUB_STEP_SUMMARY
+          echo "* Status: Completed" >> $GITHUB_STEP_SUMMARY

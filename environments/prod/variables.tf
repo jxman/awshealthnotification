@@ -29,3 +29,11 @@ variable "terraform_state_dynamodb_table" {
   description = "DynamoDB table for terraform state locking"
   type        = string
 }
+variable "tags" {
+  description = "Default tags for all resources"
+  type        = map(string)
+  default = {
+    Environment = "prod"
+    Service     = "aws-health-notifications"
+  }
+}

@@ -13,12 +13,12 @@ terraform {
   }
   required_version = ">= 1.0.0"
 }
-
 module "sns" {
   source = "../../modules/sns"
 
   environment     = var.environment
   email_addresses = var.email_addresses
+  tags            = var.tags
 }
 
 module "eventbridge" {
@@ -26,4 +26,5 @@ module "eventbridge" {
 
   environment   = var.environment
   sns_topic_arn = module.sns.topic_arn
+  tags          = var.tags
 }
