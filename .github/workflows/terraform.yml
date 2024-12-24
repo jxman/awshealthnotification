@@ -30,8 +30,8 @@ permissions:
   id-token: write
 
 jobs:
-  terraform:
-    name: "Terraform"
+  plan:
+    name: "Terraform Plan"
     runs-on: ubuntu-22.04
 
     steps:
@@ -168,7 +168,80 @@ jobs:
               body: output
             })
 
+  apply:
+    name: "Terraform Apply"
+    needs: plan
+    runs-on: ubuntu-22.04
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'prod' }}
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set Environment
+        id: setenv
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "ENVIRONMENT=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+          else
+            echo "ENVIRONMENT=prod" >> $GITHUB_ENV
+          fi
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.0"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Create backend config
+        working-directory: environments/${{ env.ENVIRONMENT }}
+        run: |
+          mkdir -p ../../backend
+          cat > ../../backend/${{ env.ENVIRONMENT }}.hcl << EOF
+          bucket         = "${{ secrets.TF_STATE_BUCKET }}"
+          key            = "health-notifications/${{ env.ENVIRONMENT }}/terraform.tfstate"
+          region         = "us-east-1"
+          dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
+          encrypt        = true
+          EOF
+
+      - name: Create tfvars file
+        working-directory: environments/${{ env.ENVIRONMENT }}
+        run: |
+          cat > terraform.tfvars << EOF
+          aws_region                     = "us-east-1"
+          environment                    = "${{ env.ENVIRONMENT }}"
+          email_addresses                = ${{ secrets.NOTIFICATION_EMAILS }}
+          terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
+          terraform_state_key            = "health-notifications/${{ env.ENVIRONMENT }}/terraform.tfstate"
+          terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
+          EOF
+
+      - name: Terraform Init
+        working-directory: environments/${{ env.ENVIRONMENT }}
+        run: terraform init -backend-config=../../backend/${{ env.ENVIRONMENT }}.hcl
+
+      - name: Download Plan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan-${{ env.ENVIRONMENT }}
+          path: environments/${{ env.ENVIRONMENT }}
+
+      - name: Verify Plan File
+        working-directory: environments/${{ env.ENVIRONMENT }}
+        run: |
+          if [ ! -f "plan.tfplan" ]; then
+            echo "Terraform plan file not found"
+            exit 1
+          fi
+
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         working-directory: environments/${{ env.ENVIRONMENT }}
         run: terraform apply -auto-approve plan.tfplan
