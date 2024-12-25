@@ -12,6 +12,8 @@ crash.*.log
 # Exclude all .tfvars files, which are likely to contain sensitive data
 *.tfvars
 *.tfvars.json
+!terraform.tfvars.example
+
 
 # Ignore CLI configuration files
 .terraformrc
@@ -42,3 +44,4 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+

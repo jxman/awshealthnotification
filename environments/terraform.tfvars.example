@@ -1,0 +1,13 @@
+aws_region                     = "us-east-1"
+environment                    = "dev"  # or "prod"
+email_addresses                = ["email1@example.com", "email2@example.com"]
+terraform_state_bucket         = "your-terraform-state-bucket"
+terraform_state_key            = "health-notifications/{environment}/terraform.tfstate"
+terraform_state_dynamodb_table = "your-terraform-lock-table"
+
+tags = {
+  Environment = "dev"  # or "prod"
+  Service     = "aws-health-notifications"
+  ManagedBy   = "terraform"
+  Owner       = "platform-team"
+}
