@@ -2,13 +2,17 @@ name: "Terraform CI/CD"
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
+      - "feature/dev-*"
     paths:
       - "environments/**"
       - "modules/**"
       - ".github/workflows/**"
   pull_request:
-    branches: ["main"]
+    branches:
+      - main
+      - "feature/dev-*"
     paths:
       - "environments/**"
       - "modules/**"
@@ -22,12 +26,16 @@ on:
           - prod
           - dev
         required: true
-        default: "prod"
+        default: "dev"
 
 permissions:
   contents: read
   pull-requests: write
   id-token: write
+
+env:
+  TF_VERSION: "1.7.0"
+  AWS_REGION: "us-east-1"
 
 jobs:
   plan:
@@ -43,6 +51,8 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "ENVIRONMENT=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+          elif [[ "${{ github.ref }}" == *"feature/dev-"* ]]; then
+            echo "ENVIRONMENT=dev" >> $GITHUB_ENV
           else
             echo "ENVIRONMENT=prod" >> $GITHUB_ENV
           fi
@@ -69,14 +79,14 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "1.7.0"
+          terraform_version: ${{ env.TF_VERSION }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Create backend config
         working-directory: environments/${{ env.ENVIRONMENT }}
@@ -85,7 +95,7 @@ jobs:
           cat > ../../backend/${{ env.ENVIRONMENT }}.hcl << EOF
           bucket         = "${{ secrets.TF_STATE_BUCKET }}"
           key            = "health-notifications/${{ env.ENVIRONMENT }}/terraform.tfstate"
-          region         = "us-east-1"
+          region         = "${{ env.AWS_REGION }}"
           dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
           encrypt        = true
           EOF
@@ -94,7 +104,7 @@ jobs:
         working-directory: environments/${{ env.ENVIRONMENT }}
         run: |
           cat > terraform.tfvars << EOF
-          aws_region                     = "us-east-1"
+          aws_region                     = "${{ env.AWS_REGION }}"
           environment                    = "${{ env.ENVIRONMENT }}"
           email_addresses                = ${{ secrets.NOTIFICATION_EMAILS }}
           terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
@@ -172,8 +182,11 @@ jobs:
     name: "Terraform Apply"
     needs: plan
     runs-on: ubuntu-22.04
-    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'prod' }}
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || (contains(github.ref, 'feature/dev-') && 'dev' || 'prod') }}
+    if: |
+      github.event_name == 'workflow_dispatch' || 
+      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+      (contains(github.ref, 'feature/dev-') && github.event_name == 'push')
 
     steps:
       - name: Checkout repository
@@ -184,6 +197,8 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "ENVIRONMENT=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+          elif [[ "${{ github.ref }}" == *"feature/dev-"* ]]; then
+            echo "ENVIRONMENT=dev" >> $GITHUB_ENV
           else
             echo "ENVIRONMENT=prod" >> $GITHUB_ENV
           fi
@@ -191,14 +206,14 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "1.7.0"
+          terraform_version: ${{ env.TF_VERSION }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Create backend config
         working-directory: environments/${{ env.ENVIRONMENT }}
@@ -207,7 +222,7 @@ jobs:
           cat > ../../backend/${{ env.ENVIRONMENT }}.hcl << EOF
           bucket         = "${{ secrets.TF_STATE_BUCKET }}"
           key            = "health-notifications/${{ env.ENVIRONMENT }}/terraform.tfstate"
-          region         = "us-east-1"
+          region         = "${{ env.AWS_REGION }}"
           dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
           encrypt        = true
           EOF
@@ -216,7 +231,7 @@ jobs:
         working-directory: environments/${{ env.ENVIRONMENT }}
         run: |
           cat > terraform.tfvars << EOF
-          aws_region                     = "us-east-1"
+          aws_region                     = "${{ env.AWS_REGION }}"
           environment                    = "${{ env.ENVIRONMENT }}"
           email_addresses                = ${{ secrets.NOTIFICATION_EMAILS }}
           terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
