@@ -112,9 +112,9 @@ jobs:
         working-directory: environments/${{ env.ENVIRONMENT }}
         run: |
           # Debug notifications format
-          echo "Notifications format check (masked):"
-          echo "Emails: ${{ secrets.NOTIFICATION_EMAILS }}" | sed 's/[^@\[\],\"]*/***/g'
-          echo "Phones: ${{ secrets.NOTIFICATION_PHONES }}" | sed 's/[^+\[\],\"]*/***/g'
+          # echo "Notifications format check (masked):"
+          # echo "Emails: ${{ secrets.NOTIFICATION_EMAILS }}" | sed 's/[^@\[\],\"]*/***/g'
+          # echo "Phones: ${{ secrets.NOTIFICATION_PHONES }}" | sed 's/[^+\[\],\"]*/***/g'
 
           cat > terraform.tfvars << EOF
           aws_region                     = "${{ env.AWS_REGION }}"
