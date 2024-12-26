@@ -107,7 +107,7 @@ jobs:
           cat > terraform.tfvars << EOF
           aws_region                     = "${{ env.AWS_REGION }}"
           environment                    = "${{ env.ENVIRONMENT }}"
-          email_addresses                = ${{ secrets.NOTIFICATION_EMAILS }}
+          email_addresses                = ["${{ secrets.NOTIFICATION_EMAIL }}"]
           terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
           terraform_state_key            = "health-notifications/${{ env.ENVIRONMENT }}/terraform.tfstate"
           terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
@@ -240,7 +240,7 @@ jobs:
           cat > terraform.tfvars << EOF
           aws_region                     = "${{ env.AWS_REGION }}"
           environment                    = "${{ env.ENVIRONMENT }}"
-          email_addresses                = ${{ secrets.NOTIFICATION_EMAILS }}
+          email_addresses                = ["${{ secrets.NOTIFICATION_EMAIL }}"]
           terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
           terraform_state_key            = "health-notifications/${{ env.ENVIRONMENT }}/terraform.tfstate"
           terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
