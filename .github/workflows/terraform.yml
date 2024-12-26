@@ -108,7 +108,6 @@ jobs:
           aws_region                     = "${{ env.AWS_REGION }}"
           environment                    = "${{ env.ENVIRONMENT }}"
           email_addresses                = ${{ secrets.NOTIFICATION_EMAILS }}
-          phone_numbers                  = ${{ secrets.NOTIFICATION_PHONES }}
           terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
           terraform_state_key            = "health-notifications/${{ env.ENVIRONMENT }}/terraform.tfstate"
           terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
@@ -120,7 +119,7 @@ jobs:
           EOF
 
           echo "Generated tfvars file (with sensitive values masked):"
-          cat terraform.tfvars | sed 's/\(secret\|key\|phone\|email\).*=/\1 = "***"/g'
+          cat terraform.tfvars | sed 's/\(secret\|key\|email\).*=/\1 = "***"/g'
 
       - name: Terraform Format
         id: fmt
@@ -242,7 +241,6 @@ jobs:
           aws_region                     = "${{ env.AWS_REGION }}"
           environment                    = "${{ env.ENVIRONMENT }}"
           email_addresses                = ${{ secrets.NOTIFICATION_EMAILS }}
-          phone_numbers                  = ${{ secrets.NOTIFICATION_PHONES }}
           terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
           terraform_state_key            = "health-notifications/${{ env.ENVIRONMENT }}/terraform.tfstate"
           terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
