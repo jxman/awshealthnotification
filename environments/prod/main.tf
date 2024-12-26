@@ -7,10 +7,8 @@ terraform {
   }
   required_version = ">= 1.0.0"
 
-  backend "s3" {
-    # Backend configuration will be provided via backend config file
-    key = "health-notifications/prod/terraform.tfstate"
-  }
+  backend "s3" {} # Empty block to be configured via backend.hcl
+
 }
 
 provider "aws" {
