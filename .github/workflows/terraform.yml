@@ -51,11 +51,16 @@ jobs:
     name: "Terraform Plan"
     runs-on: ubuntu-22.04
     needs: debug
-    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || (contains(github.ref, 'feature/dev-') && 'dev' || 'prod') }}
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
     if: |
       github.event_name == 'workflow_dispatch' || 
       (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
       (contains(github.ref, 'feature/dev-') && github.event_name == 'push')
+    # environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || (contains(github.ref, 'feature/dev-') && 'dev' || 'prod') }}
+    # if: |
+    #   github.event_name == 'workflow_dispatch' ||
+    #   (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+    #   (contains(github.ref, 'feature/dev-') && github.event_name == 'push')
 
     steps:
       - name: Checkout repository
@@ -209,11 +214,16 @@ jobs:
     name: "Terraform Apply"
     needs: plan
     runs-on: ubuntu-22.04
-    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || (contains(github.ref, 'feature/dev-') && 'dev' || 'prod') }}
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
     if: |
       github.event_name == 'workflow_dispatch' || 
       (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
       (contains(github.ref, 'feature/dev-') && github.event_name == 'push')
+    # environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || (contains(github.ref, 'feature/dev-') && 'dev' || 'prod') }}
+    # if: |
+    #   github.event_name == 'workflow_dispatch' ||
+    #   (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+    #   (contains(github.ref, 'feature/dev-') && github.event_name == 'push')
 
     steps:
       - name: Checkout repository
