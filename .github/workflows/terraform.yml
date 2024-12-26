@@ -92,15 +92,12 @@ jobs:
         working-directory: environments/${{ env.ENVIRONMENT }}
         run: |
           mkdir -p ../../backend
-          cat > ../../backend/${{ env.ENVIRONMENT }}.hcl << 'EOF'
-          bucket         = "${{ secrets.TF_STATE_BUCKET }}"
-          key            = "health-notifications/${{ env.ENVIRONMENT }}/terraform.tfstate"
-          region         = "${{ env.AWS_REGION }}"
-          dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
-          encrypt        = true
-          EOF
+          echo "bucket         = \"${{ secrets.TF_STATE_BUCKET }}\"" > ../../backend/${{ env.ENVIRONMENT }}.hcl
+          echo "key            = \"health-notifications/${{ env.ENVIRONMENT }}/terraform.tfstate\"" >> ../../backend/${{ env.ENVIRONMENT }}.hcl
+          echo "region         = \"${{ env.AWS_REGION }}\"" >> ../../backend/${{ env.ENVIRONMENT }}.hcl
+          echo "dynamodb_table = \"${{ secrets.TF_STATE_LOCK_TABLE }}\"" >> ../../backend/${{ env.ENVIRONMENT }}.hcl
+          echo "encrypt        = true" >> ../../backend/${{ env.ENVIRONMENT }}.hcl
 
-          # Debug: Check the generated file
           echo "Generated backend config:"
           cat ../../backend/${{ env.ENVIRONMENT }}.hcl
 
@@ -111,10 +108,19 @@ jobs:
           aws_region                     = "${{ env.AWS_REGION }}"
           environment                    = "${{ env.ENVIRONMENT }}"
           email_addresses                = ${{ secrets.NOTIFICATION_EMAILS }}
+          phone_numbers                  = ${{ secrets.NOTIFICATION_PHONES }}
           terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
           terraform_state_key            = "health-notifications/${{ env.ENVIRONMENT }}/terraform.tfstate"
           terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
+          tags = {
+            Environment = "${{ env.ENVIRONMENT }}"
+            Service     = "aws-health-notifications"
+            ManagedBy   = "terraform"
+          }
           EOF
+
+          echo "Generated tfvars file (with sensitive values masked):"
+          cat terraform.tfvars | sed 's/\(secret\|key\|phone\|email\).*=/\1 = "***"/g'
 
       - name: Terraform Format
         id: fmt
@@ -223,13 +229,11 @@ jobs:
         working-directory: environments/${{ env.ENVIRONMENT }}
         run: |
           mkdir -p ../../backend
-          cat > ../../backend/${{ env.ENVIRONMENT }}.hcl << EOF
-          bucket         = "${{ secrets.TF_STATE_BUCKET }}"
-          key            = "health-notifications/${{ env.ENVIRONMENT }}/terraform.tfstate"
-          region         = "${{ env.AWS_REGION }}"
-          dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
-          encrypt        = true
-          EOF
+          echo "bucket         = \"${{ secrets.TF_STATE_BUCKET }}\"" > ../../backend/${{ env.ENVIRONMENT }}.hcl
+          echo "key            = \"health-notifications/${{ env.ENVIRONMENT }}/terraform.tfstate\"" >> ../../backend/${{ env.ENVIRONMENT }}.hcl
+          echo "region         = \"${{ env.AWS_REGION }}\"" >> ../../backend/${{ env.ENVIRONMENT }}.hcl
+          echo "dynamodb_table = \"${{ secrets.TF_STATE_LOCK_TABLE }}\"" >> ../../backend/${{ env.ENVIRONMENT }}.hcl
+          echo "encrypt        = true" >> ../../backend/${{ env.ENVIRONMENT }}.hcl
 
       - name: Create tfvars file
         working-directory: environments/${{ env.ENVIRONMENT }}
@@ -238,9 +242,15 @@ jobs:
           aws_region                     = "${{ env.AWS_REGION }}"
           environment                    = "${{ env.ENVIRONMENT }}"
           email_addresses                = ${{ secrets.NOTIFICATION_EMAILS }}
+          phone_numbers                  = ${{ secrets.NOTIFICATION_PHONES }}
           terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
           terraform_state_key            = "health-notifications/${{ env.ENVIRONMENT }}/terraform.tfstate"
           terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
+          tags = {
+            Environment = "${{ env.ENVIRONMENT }}"
+            Service     = "aws-health-notifications"
+            ManagedBy   = "terraform"
+          }
           EOF
 
       - name: Terraform Init
