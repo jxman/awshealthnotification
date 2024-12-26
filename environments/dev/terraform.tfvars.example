@@ -1,6 +1,7 @@
 aws_region                     = "us-east-1"
 environment                    = "dev"  # or "prod"
 email_addresses                = ["email1@example.com", "email2@example.com"]
+phone_numbers                  = ["+1234567890"]
 terraform_state_bucket         = "your-terraform-state-bucket"
 terraform_state_key            = "health-notifications/{environment}/terraform.tfstate"
 terraform_state_dynamodb_table = "your-terraform-lock-table"
@@ -11,3 +12,4 @@ tags = {
   ManagedBy   = "terraform"
   Owner       = "platform-team"
 }
+

@@ -32,20 +32,33 @@ resource "aws_cloudwatch_event_target" "sns" {
 
     input_template = <<EOF
 {
-  "Environment": "${var.environment}",
-  "Event Source": "<eventSource>",
-  "Event Type": "<eventType>",
-  "Event ARN": "<eventArn>",
-  "Time Detected": "<eventTime>",
-  "Start Time": "<startTime>",
-  "End Time": "<endTime>",
-  "Region": "<region>",
-  "Account": "<account>",
-  "Service Affected": "<healthService>",
-  "Event Type Code": "<eventTypeCode>",
-  "Category": "<eventTypeCategory>",
-  "Status": "<statusCode>",
-  "Description": "<eventDescription>"
+  "default": {
+    "Environment": "${var.environment}",
+    "Event Source": "<eventSource>",
+    "Event Type": "<eventType>",
+    "Event ARN": "<eventArn>",
+    "Time Detected": "<eventTime>",
+    "Service Affected": "<healthService>",
+    "Status": "<statusCode>",
+    "Description": "<eventDescription>"
+  },
+  "email": {
+    "Environment": "${var.environment}",
+    "Event Source": "<eventSource>",
+    "Event Type": "<eventType>",
+    "Event ARN": "<eventArn>",
+    "Time Detected": "<eventTime>",
+    "Start Time": "<startTime>",
+    "End Time": "<endTime>",
+    "Region": "<region>",
+    "Account": "<account>",
+    "Service Affected": "<healthService>",
+    "Event Type Code": "<eventTypeCode>",
+    "Category": "<eventTypeCategory>",
+    "Status": "<statusCode>",
+    "Description": "<eventDescription>"
+  },
+  "sms": "[${var.environment}] AWS Health Alert: <healthService> is <statusCode>. <eventDescription>"
 }
 EOF
   }

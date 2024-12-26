@@ -4,6 +4,23 @@ resource "aws_sns_topic" "health_events" {
   tags         = var.tags
 }
 
+# Email Subscriptions
+resource "aws_sns_topic_subscription" "email_subscriptions" {
+  count     = length(var.email_addresses)
+  topic_arn = aws_sns_topic.health_events.arn
+  protocol  = "email"
+  endpoint  = var.email_addresses[count.index]
+}
+
+# SMS Subscriptions
+resource "aws_sns_topic_subscription" "sms_subscriptions" {
+  count     = length(var.phone_numbers)
+  topic_arn = aws_sns_topic.health_events.arn
+  protocol  = "sms"
+  endpoint  = var.phone_numbers[count.index]
+}
+
+# SNS Topic Policy
 resource "aws_sns_topic_policy" "default" {
   arn = aws_sns_topic.health_events.arn
 
@@ -21,11 +38,4 @@ resource "aws_sns_topic_policy" "default" {
       }
     ]
   })
-}
-
-resource "aws_sns_topic_subscription" "email_subscriptions" {
-  count     = length(var.email_addresses)
-  topic_arn = aws_sns_topic.health_events.arn
-  protocol  = "email"
-  endpoint  = var.email_addresses[count.index]
 }
