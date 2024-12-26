@@ -38,9 +38,19 @@ env:
   AWS_REGION: "us-east-1"
 
 jobs:
+  debug:
+    name: "Debug Configuration"
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Debug Email Format
+        run: |
+          echo "Email format (masked):"
+          echo "${{ secrets.NOTIFICATION_EMAILS }}" | sed 's/[^@\[\],\"]*/***/g'
+
   plan:
     name: "Terraform Plan"
     runs-on: ubuntu-22.04
+    needs: debug
 
     steps:
       - name: Checkout repository
@@ -98,16 +108,19 @@ jobs:
           echo "dynamodb_table = \"${{ secrets.TF_STATE_LOCK_TABLE }}\"" >> ../../backend/${{ env.ENVIRONMENT }}.hcl
           echo "encrypt        = true" >> ../../backend/${{ env.ENVIRONMENT }}.hcl
 
-          echo "Generated backend config:"
-          cat ../../backend/${{ env.ENVIRONMENT }}.hcl
-
       - name: Create tfvars file
         working-directory: environments/${{ env.ENVIRONMENT }}
         run: |
+          # Debug notifications format
+          echo "Notifications format check (masked):"
+          echo "Emails: ${{ secrets.NOTIFICATION_EMAILS }}" | sed 's/[^@\[\],\"]*/***/g'
+          echo "Phones: ${{ secrets.NOTIFICATION_PHONES }}" | sed 's/[^+\[\],\"]*/***/g'
+
           cat > terraform.tfvars << EOF
           aws_region                     = "${{ env.AWS_REGION }}"
           environment                    = "${{ env.ENVIRONMENT }}"
-          email_addresses                = ["${{ secrets.NOTIFICATION_EMAIL }}"]
+          email_addresses                = [${{ secrets.NOTIFICATION_EMAILS }}]
+          phone_numbers                  = [${{ secrets.NOTIFICATION_PHONES }}]
           terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
           terraform_state_key            = "health-notifications/${{ env.ENVIRONMENT }}/terraform.tfstate"
           terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
@@ -119,7 +132,7 @@ jobs:
           EOF
 
           echo "Generated tfvars file (with sensitive values masked):"
-          cat terraform.tfvars | sed 's/\(secret\|key\|email\).*=/\1 = "***"/g'
+          cat terraform.tfvars | sed 's/\(secret\|key\|phone\|email\).*=/\1 = "***"/g'
 
       - name: Terraform Format
         id: fmt
@@ -240,7 +253,8 @@ jobs:
           cat > terraform.tfvars << EOF
           aws_region                     = "${{ env.AWS_REGION }}"
           environment                    = "${{ env.ENVIRONMENT }}"
-          email_addresses                = ["${{ secrets.NOTIFICATION_EMAIL }}"]
+          email_addresses                = [${{ secrets.NOTIFICATION_EMAILS }}]
+          phone_numbers                  = [${{ secrets.NOTIFICATION_PHONES }}]
           terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
           terraform_state_key            = "health-notifications/${{ env.ENVIRONMENT }}/terraform.tfstate"
           terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"

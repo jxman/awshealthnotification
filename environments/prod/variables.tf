@@ -15,6 +15,12 @@ variable "email_addresses" {
   type        = list(string)
 }
 
+variable "phone_numbers" {
+  description = "List of phone numbers for SMS notifications"
+  type        = list(string)
+  default     = []
+}
+
 variable "terraform_state_bucket" {
   description = "S3 bucket for storing terraform state"
   type        = string
