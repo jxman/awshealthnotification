@@ -92,13 +92,17 @@ jobs:
         working-directory: environments/${{ env.ENVIRONMENT }}
         run: |
           mkdir -p ../../backend
-          cat > ../../backend/${{ env.ENVIRONMENT }}.hcl << EOF
+          cat > ../../backend/${{ env.ENVIRONMENT }}.hcl << 'EOF'
           bucket         = "${{ secrets.TF_STATE_BUCKET }}"
           key            = "health-notifications/${{ env.ENVIRONMENT }}/terraform.tfstate"
           region         = "${{ env.AWS_REGION }}"
           dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
           encrypt        = true
           EOF
+
+          # Debug: Check the generated file
+          echo "Generated backend config:"
+          cat ../../backend/${{ env.ENVIRONMENT }}.hcl
 
       - name: Create tfvars file
         working-directory: environments/${{ env.ENVIRONMENT }}
