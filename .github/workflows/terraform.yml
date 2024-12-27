@@ -112,6 +112,11 @@ jobs:
       - name: Create tfvars file
         working-directory: environments/${{ needs.setup.outputs.environment }}
         run: |
+          echo "Current environment: ${{ needs.setup.outputs.environment }}"
+          echo "Checking secrets format (masked):"
+          echo "Email format: ${{ secrets[format('%s_NOTIFICATION_EMAILS', needs.setup.outputs.environment)] }}" | sed 's/[^@\[\],\"]*/***/g'
+          echo "Phone format: ${{ secrets[format('%s_NOTIFICATION_PHONES', needs.setup.outputs.environment)] }}" | sed 's/[^+\[\],\"]*/***/g'
+
           cat > terraform.tfvars << EOF
           aws_region                     = "${{ env.AWS_REGION }}"
           environment                    = "${{ needs.setup.outputs.environment }}"
@@ -126,6 +131,9 @@ jobs:
             ManagedBy   = "terraform"
           }
           EOF
+
+          echo "Generated tfvars content (with sensitive values masked):"
+          cat terraform.tfvars | sed 's/\(secret\|key\|phone\|email\).*=/\1 = "***"/g'
 
       - name: Terraform Init
         id: init
