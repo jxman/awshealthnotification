@@ -127,6 +127,11 @@ jobs:
           }
           EOF
 
+          echo "Debugging:"
+          echo ${{ secrets[format('{0}_NOTIFICATION_EMAIL', needs.setup.outputs.environment)] }}
+          echo ${{ secrets[format('{0}_NOTIFICATION_PHONE', needs.setup.outputs.environment)] }}
+          echo "End of Debugging:"
+
           echo "Generated tfvars (with sensitive values masked):"
           cat terraform.tfvars | sed 's/\(email_addresses.*=\).*/\1 [***]/g; s/\(phone_numbers.*=\).*/\1 [***]/g'
 
