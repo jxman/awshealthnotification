@@ -34,67 +34,41 @@ permissions:
   id-token: write
 
 env:
-  TF_VERSION: "1.7.0"
+  TF_VERSION: "1.10.1"
   AWS_REGION: "us-east-1"
 
 jobs:
-  debug:
-    name: "Debug Configuration"
+  setup:
+    name: "Setup and Validate"
     runs-on: ubuntu-22.04
-    steps:
-      - name: Debug Email Format
-        run: |
-          echo "Email format (masked):"
-          echo "${{ secrets.NOTIFICATION_EMAILS }}" | sed 's/[^@\[\],\"]*/***/g'
-
-  plan:
-    name: "Terraform Plan"
-    runs-on: ubuntu-22.04
-    needs: debug
-    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
-    if: |
-      github.event_name == 'workflow_dispatch' || 
-      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
-      (contains(github.ref, 'feature/dev-') && github.event_name == 'push')
-    # environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || (contains(github.ref, 'feature/dev-') && 'dev' || 'prod') }}
-    # if: |
-    #   github.event_name == 'workflow_dispatch' ||
-    #   (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
-    #   (contains(github.ref, 'feature/dev-') && github.event_name == 'push')
+    outputs:
+      environment: ${{ steps.setenv.outputs.environment }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Set Environment
         id: setenv
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "ENVIRONMENT=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+            ENV="${{ github.event.inputs.environment }}"
           elif [[ "${{ github.ref }}" == *"feature/dev-"* ]]; then
-            echo "ENVIRONMENT=dev" >> $GITHUB_ENV
+            ENV="dev"
           else
-            echo "ENVIRONMENT=prod" >> $GITHUB_ENV
+            ENV="prod"
           fi
+          echo "environment=$ENV" >> $GITHUB_OUTPUT
+          echo "ENVIRONMENT=$ENV" >> $GITHUB_ENV
 
-      - name: Verify Environment Directory
-        run: |
-          if [ ! -d "environments/${{ env.ENVIRONMENT }}" ]; then
-            echo "Environment directory 'environments/${{ env.ENVIRONMENT }}' not found"
-            exit 1
-          fi
+  plan:
+    name: "Terraform Plan"
+    needs: setup
+    runs-on: ubuntu-22.04
+    environment:
+      name: ${{ needs.setup.outputs.environment }}
+      url: ${{ format('https://console.aws.amazon.com/sns/v3/home?region={0}#/topics', env.AWS_REGION) }}
 
-      - name: Check Required Files
-        run: |
-          cd "environments/${{ env.ENVIRONMENT }}"
-          if [ ! -f "main.tf" ]; then
-            echo "main.tf not found in environments/${{ env.ENVIRONMENT }}"
-            exit 1
-          fi
-          if [ ! -f "variables.tf" ]; then
-            echo "variables.tf not found in environments/${{ env.ENVIRONMENT }}"
-            exit 1
-          fi
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -108,68 +82,75 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Verify Environment Directory
+        run: |
+          if [ ! -d "environments/${{ needs.setup.outputs.environment }}" ]; then
+            echo "Environment directory 'environments/${{ needs.setup.outputs.environment }}' not found"
+            exit 1
+          fi
+
+      - name: Check Required Files
+        working-directory: environments/${{ needs.setup.outputs.environment }}
+        run: |
+          for file in main.tf variables.tf; do
+            if [ ! -f "$file" ]; then
+              echo "$file not found in environments/${{ needs.setup.outputs.environment }}"
+              exit 1
+            fi
+          done
+
       - name: Create backend config
-        working-directory: environments/${{ env.ENVIRONMENT }}
+        working-directory: environments/${{ needs.setup.outputs.environment }}
         run: |
           mkdir -p ../../backend
-          echo "bucket         = \"${{ secrets.TF_STATE_BUCKET }}\"" > ../../backend/${{ env.ENVIRONMENT }}.hcl
-          echo "key            = \"health-notifications/${{ env.ENVIRONMENT }}/terraform.tfstate\"" >> ../../backend/${{ env.ENVIRONMENT }}.hcl
-          echo "region         = \"${{ env.AWS_REGION }}\"" >> ../../backend/${{ env.ENVIRONMENT }}.hcl
-          echo "dynamodb_table = \"${{ secrets.TF_STATE_LOCK_TABLE }}\"" >> ../../backend/${{ env.ENVIRONMENT }}.hcl
-          echo "encrypt        = true" >> ../../backend/${{ env.ENVIRONMENT }}.hcl
+          cat > ../../backend/${{ needs.setup.outputs.environment }}.hcl << EOF
+          bucket         = "${{ secrets.TF_STATE_BUCKET }}"
+          key            = "health-notifications/${{ needs.setup.outputs.environment }}/terraform.tfstate"
+          region         = "${{ env.AWS_REGION }}"
+          dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
+          encrypt        = true
+          EOF
 
       - name: Create tfvars file
-        working-directory: environments/${{ env.ENVIRONMENT }}
+        working-directory: environments/${{ needs.setup.outputs.environment }}
         run: |
-          # Debug notifications format
-          # echo "Notifications format check (masked):"
-          # echo "Emails: ${{ secrets.NOTIFICATION_EMAILS }}" | sed 's/[^@\[\],\"]*/***/g'
-          # echo "Phones: ${{ secrets.NOTIFICATION_PHONES }}" | sed 's/[^+\[\],\"]*/***/g'
-
           cat > terraform.tfvars << EOF
           aws_region                     = "${{ env.AWS_REGION }}"
-          environment                    = "${{ env.ENVIRONMENT }}"
-          email_addresses                = ${{ secrets.NOTIFICATION_EMAILS }}
-          phone_numbers                  = ${{ secrets.NOTIFICATION_PHONES }}
+          environment                    = "${{ needs.setup.outputs.environment }}"
+          email_addresses                = ${{ secrets[format('%s_NOTIFICATION_EMAILS', needs.setup.outputs.environment)] }}
+          phone_numbers                  = ${{ secrets[format('%s_NOTIFICATION_PHONES', needs.setup.outputs.environment)] }}
           terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
-          terraform_state_key            = "health-notifications/${{ env.ENVIRONMENT }}/terraform.tfstate"
+          terraform_state_key            = "health-notifications/${{ needs.setup.outputs.environment }}/terraform.tfstate"
           terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
           tags = {
-            Environment = "${{ env.ENVIRONMENT }}"
+            Environment = "${{ needs.setup.outputs.environment }}"
             Service     = "aws-health-notifications"
             ManagedBy   = "terraform"
           }
           EOF
 
-          echo "Generated tfvars file (with sensitive values masked):"
-          cat terraform.tfvars | sed 's/\(secret\|key\|phone\|email\).*=/\1 = "***"/g'
+      - name: Terraform Init
+        id: init
+        working-directory: environments/${{ needs.setup.outputs.environment }}
+        run: terraform init -backend-config=../../backend/${{ needs.setup.outputs.environment }}.hcl
 
       - name: Terraform Format
         id: fmt
-        working-directory: environments/${{ env.ENVIRONMENT }}
+        working-directory: environments/${{ needs.setup.outputs.environment }}
         run: terraform fmt -check -recursive ../..
         continue-on-error: true
 
-      - name: Terraform Init
-        id: init
-        working-directory: environments/${{ env.ENVIRONMENT }}
-        run: terraform init -backend-config=../../backend/${{ env.ENVIRONMENT }}.hcl
-
       - name: Terraform Validate
         id: validate
-        working-directory: environments/${{ env.ENVIRONMENT }}
+        working-directory: environments/${{ needs.setup.outputs.environment }}
         run: terraform validate
 
       - name: Terraform Plan
         id: plan
-        working-directory: environments/${{ env.ENVIRONMENT }}
+        working-directory: environments/${{ needs.setup.outputs.environment }}
         run: |
           terraform plan -input=false -no-color -out=plan.tfplan
           terraform show -no-color plan.tfplan > plan.txt
-
-          echo "Checking files after plan:"
-          ls -la
-
           echo "PLAN<<EOF" >> $GITHUB_ENV
           cat plan.txt >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
@@ -177,10 +158,10 @@ jobs:
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: terraform-plan-${{ env.ENVIRONMENT }}
+          name: terraform-plan-${{ needs.setup.outputs.environment }}
           path: |
-            environments/${{ env.ENVIRONMENT }}/plan.tfplan
-            environments/${{ env.ENVIRONMENT }}/plan.txt
+            environments/${{ needs.setup.outputs.environment }}/plan.tfplan
+            environments/${{ needs.setup.outputs.environment }}/plan.txt
           retention-days: 1
 
       - name: Update Pull Request
@@ -212,33 +193,19 @@ jobs:
 
   apply:
     name: "Terraform Apply"
-    needs: plan
+    needs: [setup, plan]
     runs-on: ubuntu-22.04
-    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
+    environment:
+      name: ${{ needs.setup.outputs.environment }}
+      url: ${{ format('https://console.aws.amazon.com/sns/v3/home?region={0}#/topics', env.AWS_REGION) }}
     if: |
       github.event_name == 'workflow_dispatch' || 
       (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
       (contains(github.ref, 'feature/dev-') && github.event_name == 'push')
-    # environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || (contains(github.ref, 'feature/dev-') && 'dev' || 'prod') }}
-    # if: |
-    #   github.event_name == 'workflow_dispatch' ||
-    #   (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
-    #   (contains(github.ref, 'feature/dev-') && github.event_name == 'push')
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Set Environment
-        id: setenv
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "ENVIRONMENT=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
-          elif [[ "${{ github.ref }}" == *"feature/dev-"* ]]; then
-            echo "ENVIRONMENT=dev" >> $GITHUB_ENV
-          else
-            echo "ENVIRONMENT=prod" >> $GITHUB_ENV
-          fi
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -253,45 +220,47 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Create backend config
-        working-directory: environments/${{ env.ENVIRONMENT }}
+        working-directory: environments/${{ needs.setup.outputs.environment }}
         run: |
           mkdir -p ../../backend
-          echo "bucket         = \"${{ secrets.TF_STATE_BUCKET }}\"" > ../../backend/${{ env.ENVIRONMENT }}.hcl
-          echo "key            = \"health-notifications/${{ env.ENVIRONMENT }}/terraform.tfstate\"" >> ../../backend/${{ env.ENVIRONMENT }}.hcl
-          echo "region         = \"${{ env.AWS_REGION }}\"" >> ../../backend/${{ env.ENVIRONMENT }}.hcl
-          echo "dynamodb_table = \"${{ secrets.TF_STATE_LOCK_TABLE }}\"" >> ../../backend/${{ env.ENVIRONMENT }}.hcl
-          echo "encrypt        = true" >> ../../backend/${{ env.ENVIRONMENT }}.hcl
+          cat > ../../backend/${{ needs.setup.outputs.environment }}.hcl << EOF
+          bucket         = "${{ secrets.TF_STATE_BUCKET }}"
+          key            = "health-notifications/${{ needs.setup.outputs.environment }}/terraform.tfstate"
+          region         = "${{ env.AWS_REGION }}"
+          dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
+          encrypt        = true
+          EOF
 
       - name: Create tfvars file
-        working-directory: environments/${{ env.ENVIRONMENT }}
+        working-directory: environments/${{ needs.setup.outputs.environment }}
         run: |
           cat > terraform.tfvars << EOF
           aws_region                     = "${{ env.AWS_REGION }}"
-          environment                    = "${{ env.ENVIRONMENT }}"
-          email_addresses                = ${{ secrets.NOTIFICATION_EMAILS }}
-          phone_numbers                  = ${{ secrets.NOTIFICATION_PHONES }}
+          environment                    = "${{ needs.setup.outputs.environment }}"
+          email_addresses                = ${{ secrets[format('%s_NOTIFICATION_EMAILS', needs.setup.outputs.environment)] }}
+          phone_numbers                  = ${{ secrets[format('%s_NOTIFICATION_PHONES', needs.setup.outputs.environment)] }}
           terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
-          terraform_state_key            = "health-notifications/${{ env.ENVIRONMENT }}/terraform.tfstate"
+          terraform_state_key            = "health-notifications/${{ needs.setup.outputs.environment }}/terraform.tfstate"
           terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
           tags = {
-            Environment = "${{ env.ENVIRONMENT }}"
+            Environment = "${{ needs.setup.outputs.environment }}"
             Service     = "aws-health-notifications"
             ManagedBy   = "terraform"
           }
           EOF
 
       - name: Terraform Init
-        working-directory: environments/${{ env.ENVIRONMENT }}
-        run: terraform init -backend-config=../../backend/${{ env.ENVIRONMENT }}.hcl
+        working-directory: environments/${{ needs.setup.outputs.environment }}
+        run: terraform init -backend-config=../../backend/${{ needs.setup.outputs.environment }}.hcl
 
       - name: Download Plan Artifact
         uses: actions/download-artifact@v4
         with:
-          name: terraform-plan-${{ env.ENVIRONMENT }}
-          path: environments/${{ env.ENVIRONMENT }}
+          name: terraform-plan-${{ needs.setup.outputs.environment }}
+          path: environments/${{ needs.setup.outputs.environment }}
 
       - name: Verify Plan File
-        working-directory: environments/${{ env.ENVIRONMENT }}
+        working-directory: environments/${{ needs.setup.outputs.environment }}
         run: |
           if [ ! -f "plan.tfplan" ]; then
             echo "Terraform plan file not found"
@@ -299,5 +268,5 @@ jobs:
           fi
 
       - name: Terraform Apply
-        working-directory: environments/${{ env.ENVIRONMENT }}
+        working-directory: environments/${{ needs.setup.outputs.environment }}
         run: terraform apply -auto-approve plan.tfplan
