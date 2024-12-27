@@ -111,26 +111,15 @@ jobs:
 
       - name: Create tfvars file
         working-directory: environments/${{ needs.setup.outputs.environment }}
-        env:
-          EMAIL_SECRET_NAME: ${{ format('{0}_NOTIFICATION_EMAILS', needs.setup.outputs.environment) }}
-          PHONE_SECRET_NAME: ${{ format('{0}_NOTIFICATION_PHONES', needs.setup.outputs.environment) }}
         run: |
           echo "Debug Information:"
           echo "Current environment: ${{ needs.setup.outputs.environment }}"
-          echo "Looking for secrets: $EMAIL_SECRET_NAME and $PHONE_SECRET_NAME"
-
-          # Safely check if secrets exist and get their values
-          EMAIL_VALUE="${{ secrets[format('{0}_NOTIFICATION_EMAILS', needs.setup.outputs.environment)] || '[]' }}"
-          PHONE_VALUE="${{ secrets[format('{0}_NOTIFICATION_PHONES', needs.setup.outputs.environment)] || '[]' }}"
-
-          echo "Email secret found: ${{ secrets[format('{0}_NOTIFICATION_EMAILS', needs.setup.outputs.environment)] != '' }}"
-          echo "Phone secret found: ${{ secrets[format('{0}_NOTIFICATION_PHONES', needs.setup.outputs.environment)] != '' }}"
 
           cat > terraform.tfvars << EOF
           aws_region                     = "${{ env.AWS_REGION }}"
           environment                    = "${{ needs.setup.outputs.environment }}"
-          email_addresses                = $EMAIL_VALUE
-          phone_numbers                  = $PHONE_VALUE
+          email_addresses                = ["${{ secrets[format('{0}_NOTIFICATION_EMAIL', needs.setup.outputs.environment)] }}"]
+          phone_numbers                  = ["${{ secrets[format('{0}_NOTIFICATION_PHONE', needs.setup.outputs.environment)] }}"]
           terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
           terraform_state_key            = "health-notifications/${{ needs.setup.outputs.environment }}/terraform.tfstate"
           terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
