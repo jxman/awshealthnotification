@@ -112,14 +112,16 @@ jobs:
       - name: Create tfvars file
         working-directory: environments/${{ needs.setup.outputs.environment }}
         run: |
-          echo "Debug Information:"
-          echo "Current environment: ${{ needs.setup.outputs.environment }}"
+          # Debug current values (masked)
+          echo "Debug - Email value (masked):"
+          echo "${{ secrets[format('{0}_NOTIFICATION_EMAIL', needs.setup.outputs.environment)] }}" | sed 's/[^@\[\],\"]*/***/g'
 
+          # Create tfvars with properly formatted values
           cat > terraform.tfvars << EOF
           aws_region                     = "${{ env.AWS_REGION }}"
           environment                    = "${{ needs.setup.outputs.environment }}"
           email_addresses                = ["${{ secrets[format('{0}_NOTIFICATION_EMAIL', needs.setup.outputs.environment)] }}"]
-          phone_numbers                  = ["${{ secrets[format('{0}_NOTIFICATION_PHONE', needs.setup.outputs.environment)] }}"]
+          phone_numbers                  = ["+${{ secrets[format('{0}_NOTIFICATION_PHONE', needs.setup.outputs.environment)] }}"]
           terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
           terraform_state_key            = "health-notifications/${{ needs.setup.outputs.environment }}/terraform.tfstate"
           terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
@@ -130,7 +132,7 @@ jobs:
           }
           EOF
 
-          echo "Generated tfvars content (with sensitive values masked):"
+          echo "Generated tfvars (with sensitive values masked):"
           cat terraform.tfvars | sed 's/\(secret\|key\|phone\|email\).*=/\1 = "***"/g'
 
       - name: Terraform Init
@@ -237,11 +239,16 @@ jobs:
       - name: Create tfvars file
         working-directory: environments/${{ needs.setup.outputs.environment }}
         run: |
+          # Debug current values (masked)
+          echo "Debug - Email value (masked):"
+          echo "${{ secrets[format('{0}_NOTIFICATION_EMAIL', needs.setup.outputs.environment)] }}" | sed 's/[^@\[\],\"]*/***/g'
+
+          # Create tfvars with properly formatted values
           cat > terraform.tfvars << EOF
           aws_region                     = "${{ env.AWS_REGION }}"
           environment                    = "${{ needs.setup.outputs.environment }}"
           email_addresses                = ["${{ secrets[format('{0}_NOTIFICATION_EMAIL', needs.setup.outputs.environment)] }}"]
-          phone_numbers                  = ["${{ secrets[format('{0}_NOTIFICATION_PHONE', needs.setup.outputs.environment)] }}"]
+          phone_numbers                  = ["+${{ secrets[format('{0}_NOTIFICATION_PHONE', needs.setup.outputs.environment)] }}"]
           terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
           terraform_state_key            = "health-notifications/${{ needs.setup.outputs.environment }}/terraform.tfstate"
           terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
@@ -251,6 +258,9 @@ jobs:
             ManagedBy   = "terraform"
           }
           EOF
+
+          echo "Generated tfvars (with sensitive values masked):"
+          cat terraform.tfvars | sed 's/\(secret\|key\|phone\|email\).*=/\1 = "***"/g'
 
       - name: Terraform Init
         working-directory: environments/${{ needs.setup.outputs.environment }}
