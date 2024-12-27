@@ -10,6 +10,13 @@ resource "aws_sns_topic_subscription" "email_subscriptions" {
   topic_arn = aws_sns_topic.health_events.arn
   protocol  = "email"
   endpoint  = var.email_addresses[count.index]
+
+  lifecycle {
+    create_before_destroy = true
+    replace_triggered_by = [
+      var.email_addresses
+    ]
+  }
 }
 
 # SMS Subscriptions
@@ -18,6 +25,13 @@ resource "aws_sns_topic_subscription" "sms_subscriptions" {
   topic_arn = aws_sns_topic.health_events.arn
   protocol  = "sms"
   endpoint  = var.phone_numbers[count.index]
+
+  lifecycle {
+    create_before_destroy = true
+    replace_triggered_by = [
+      var.phone_numbers
+    ]
+  }
 }
 
 # SNS Topic Policy
