@@ -13,9 +13,6 @@ resource "aws_sns_topic_subscription" "email_subscriptions" {
 
   lifecycle {
     create_before_destroy = true
-    replace_triggered_by = [
-      var.email_addresses
-    ]
   }
 }
 
@@ -28,9 +25,6 @@ resource "aws_sns_topic_subscription" "sms_subscriptions" {
 
   lifecycle {
     create_before_destroy = true
-    replace_triggered_by = [
-      var.phone_numbers
-    ]
   }
 }
 
