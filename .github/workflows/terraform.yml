@@ -112,11 +112,6 @@ jobs:
       - name: Create tfvars file
         working-directory: environments/${{ needs.setup.outputs.environment }}
         run: |
-          # Debug values (masked)
-          echo "Debug - Environment: ${{ needs.setup.outputs.environment }}"
-          echo "Email values (masked): ${{ secrets[format('{0}_NOTIFICATION_EMAIL', needs.setup.outputs.environment)] }}"
-          echo "Phone values (masked): ${{ secrets[format('{0}_NOTIFICATION_PHONE', needs.setup.outputs.environment)] }}"
-
           cat > terraform.tfvars << EOF
           aws_region                     = "${{ env.AWS_REGION }}"
           environment                    = "${{ needs.setup.outputs.environment }}"
@@ -132,8 +127,6 @@ jobs:
           }
           EOF
 
-          echo ${{ secrets[format('{0}_NOTIFICATION_EMAIL', needs.setup.outputs.environment)] }}
-          echo ${{ secrets[format('{0}_NOTIFICATION_PHONE', needs.setup.outputs.environment)] }}
           echo "Generated tfvars (with sensitive values masked):"
           cat terraform.tfvars | sed 's/\(email_addresses.*=\).*/\1 [***]/g; s/\(phone_numbers.*=\).*/\1 [***]/g'
 
@@ -241,11 +234,6 @@ jobs:
       - name: Create tfvars file
         working-directory: environments/${{ needs.setup.outputs.environment }}
         run: |
-          # Debug values (masked)
-          echo "Debug - Environment: ${{ needs.setup.outputs.environment }}"
-          echo "Email values (masked): ${{ secrets[format('{0}_NOTIFICATION_EMAIL', needs.setup.outputs.environment)] }}"
-          echo "Phone values (masked): ${{ secrets[format('{0}_NOTIFICATION_PHONE', needs.setup.outputs.environment)] }}"
-
           cat > terraform.tfvars << EOF
           aws_region                     = "${{ env.AWS_REGION }}"
           environment                    = "${{ needs.setup.outputs.environment }}"
