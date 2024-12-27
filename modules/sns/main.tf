@@ -13,6 +13,7 @@ resource "aws_sns_topic_subscription" "email_subscriptions" {
 
   lifecycle {
     create_before_destroy = true
+    replace_triggered_by  = [aws_sns_topic.health_events.arn]
   }
 }
 
@@ -25,6 +26,7 @@ resource "aws_sns_topic_subscription" "sms_subscriptions" {
 
   lifecycle {
     create_before_destroy = true
+    replace_triggered_by  = [aws_sns_topic.health_events.arn]
   }
 }
 
