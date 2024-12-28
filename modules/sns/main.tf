@@ -6,28 +6,35 @@ resource "aws_sns_topic" "health_events" {
 
 # Email Subscriptions
 resource "aws_sns_topic_subscription" "email_subscriptions" {
-  count     = length(var.email_addresses)
+  for_each  = toset(var.email_addresses)
   topic_arn = aws_sns_topic.health_events.arn
   protocol  = "email"
-  endpoint  = var.email_addresses[count.index]
+  endpoint  = each.value
 
-  lifecycle {
-    create_before_destroy = true
-    replace_triggered_by  = [aws_sns_topic.health_events.arn]
-  }
+  # count     = length(var.email_addresses)
+  # topic_arn = aws_sns_topic.health_events.arn
+  # protocol  = "email"
+  # endpoint  = var.email_addresses[count.index]
+  # lifecycle {
+  #   create_before_destroy = true
+  # }
 }
 
 # SMS Subscriptions
 resource "aws_sns_topic_subscription" "sms_subscriptions" {
-  count     = length(var.phone_numbers)
+  for_each  = toset(var.phone_numbers)
   topic_arn = aws_sns_topic.health_events.arn
   protocol  = "sms"
-  endpoint  = var.phone_numbers[count.index]
+  endpoint  = each.value
 
-  lifecycle {
-    create_before_destroy = true
-    replace_triggered_by  = [aws_sns_topic.health_events.arn]
-  }
+  # count     = length(var.phone_numbers)
+  # topic_arn = aws_sns_topic.health_events.arn
+  # protocol  = "sms"
+  # endpoint  = var.phone_numbers[count.index]
+  # lifecycle {
+  #   create_before_destroy = true
+  #   replace_triggered_by  = [aws_sns_topic.health_events.arn]
+  # }
 }
 
 # SNS Topic Policy
