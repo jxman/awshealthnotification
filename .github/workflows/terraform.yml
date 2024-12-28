@@ -64,6 +64,11 @@ jobs:
           terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
           EOF
 
+          # Debug section to who environment, email and phone numbers are being set
+          echo ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
+          echo ${{ secrets[format('{0}_NOTIFICATION_EMAIL', github.event_name == 'workflow_dispatch' && inputs.environment || 'dev')] }}
+          echo ${{ secrets[format('{0}_NOTIFICATION_PHONE', github.event_name == 'workflow_dispatch' && inputs.environment || 'dev')] }}
+
       - name: Terraform Init
         working-directory: environments/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
         run: terraform init -backend-config=../../backend.hcl
