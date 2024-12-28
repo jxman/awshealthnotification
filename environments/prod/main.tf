@@ -19,8 +19,8 @@ module "sns" {
 
   environment     = var.environment
   email_addresses = var.email_addresses
-  # phone_numbers   = var.phone_numbers
-  tags = var.tags
+  phone_numbers   = var.phone_numbers
+  tags            = var.tags
 }
 
 module "eventbridge" {
