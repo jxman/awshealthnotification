@@ -2,130 +2,135 @@ name: "Terraform CI/CD"
 
 on:
   push:
-    branches:
-      - main
-      - "feature/dev-*"
-    paths:
-      - "environments/**"
-      - "modules/**"
-      - ".github/workflows/**"
+    branches: ["main"]
   pull_request:
-    branches:
-      - main
-      - "feature/dev-*"
+    branches: ["main"]
   workflow_dispatch:
     inputs:
       environment:
         type: choice
         description: "Select environment"
-        options:
-          - prod
-          - dev
+        options: ["dev", "prod"]
         required: true
         default: "dev"
 
 permissions:
   contents: read
   pull-requests: write
-  id-token: write
+
+env:
+  AWS_REGION: "us-east-1"
 
 jobs:
-  setup:
-    name: "Setup and Validate"
-    runs-on: ubuntu-22.04
-    outputs:
-      environment: ${{ steps.setenv.outputs.environment }}
-
-    steps:
-      - name: Set Environment
-        id: setenv
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            ENV="${{ github.event.inputs.environment }}"
-          else
-            ENV="dev"
-          fi
-          echo "environment=$ENV" >> $GITHUB_OUTPUT
-
   plan:
     name: "Terraform Plan"
-    needs: setup
-    runs-on: ubuntu-22.04
-    environment:
-      name: ${{ needs.setup.outputs.environment }}
-      url: ${{ format('https://console.aws.amazon.com/sns/v3/home?region=us-east-1#/topics') }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Terraform Environment
-        uses: ./.github/actions/terraform-setup
+      - uses: hashicorp/setup-terraform@v3
         with:
-          environment: ${{ needs.setup.outputs.environment }}
-          aws-access-key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          tf-state-bucket: ${{ secrets.TF_STATE_BUCKET }}
-          tf-state-lock-table: ${{ secrets.TF_STATE_LOCK_TABLE }}
-          notification-email: ${{ secrets[format('{0}_NOTIFICATION_EMAIL', needs.setup.outputs.environment)] }}
-          notification-phone: ${{ secrets[format('{0}_NOTIFICATION_PHONE', needs.setup.outputs.environment)] }}
+          terraform_version: "1.10.1"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform Files
+        working-directory: environments/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
+        run: |
+          # Create backend config
+          cat > ../../backend.hcl << EOF
+          bucket         = "${{ secrets.TF_STATE_BUCKET }}"
+          key            = "health-notifications/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}/terraform.tfstate"
+          region         = "${{ env.AWS_REGION }}"
+          dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
+          encrypt        = true
+          EOF
+
+          # Create tfvars
+          cat > terraform.tfvars << EOF
+          aws_region                     = "${{ env.AWS_REGION }}"
+          environment                    = "${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}"
+          email_addresses                = ${{ secrets[format('{0}_NOTIFICATION_EMAIL', github.event_name == 'workflow_dispatch' && inputs.environment || 'dev')] }}
+          phone_numbers                  = ${{ secrets[format('{0}_NOTIFICATION_PHONE', github.event_name == 'workflow_dispatch' && inputs.environment || 'dev')] }}
+          terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
+          terraform_state_key            = "health-notifications/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}/terraform.tfstate"
+          terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
+          EOF
 
       - name: Terraform Init
-        working-directory: environments/${{ needs.setup.outputs.environment }}
-        run: terraform init -backend-config=../../backend/${{ needs.setup.outputs.environment }}.hcl
+        working-directory: environments/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
+        run: terraform init -backend-config=../../backend.hcl
 
       - name: Terraform Plan
-        id: plan
-        working-directory: environments/${{ needs.setup.outputs.environment }}
-        run: |
-          terraform plan -input=false -no-color -out=plan.tfplan
-          terraform show -no-color plan.tfplan > plan.txt
+        working-directory: environments/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
+        run: terraform plan -out=plan.tfplan
 
-      - name: Upload Plan Artifact
+      - name: Upload Plan
         uses: actions/upload-artifact@v4
         with:
-          name: terraform-plan-${{ needs.setup.outputs.environment }}
-          path: |
-            environments/${{ needs.setup.outputs.environment }}/plan.tfplan
-            environments/${{ needs.setup.outputs.environment }}/plan.txt
-          retention-days: 1
+          name: tf-plan
+          path: environments/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}/plan.tfplan
+          retention-days: 5
 
   apply:
     name: "Terraform Apply"
-    needs: [setup, plan]
-    runs-on: ubuntu-22.04
-    environment:
-      name: ${{ needs.setup.outputs.environment }}
-      url: ${{ format('https://console.aws.amazon.com/sns/v3/home?region=us-east-1#/topics') }}
-    if: |
-      github.event_name == 'workflow_dispatch' || 
-      github.event_name == 'push'
+    needs: plan
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Terraform Environment
-        uses: ./.github/actions/terraform-setup
+      - uses: hashicorp/setup-terraform@v3
         with:
-          environment: ${{ needs.setup.outputs.environment }}
-          aws-access-key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          tf-state-bucket: ${{ secrets.TF_STATE_BUCKET }}
-          tf-state-lock-table: ${{ secrets.TF_STATE_LOCK_TABLE }}
-          notification-email: ${{ secrets[format('{0}_NOTIFICATION_EMAIL', needs.setup.outputs.environment)] }}
-          notification-phone: ${{ secrets[format('{0}_NOTIFICATION_PHONE', needs.setup.outputs.environment)] }}
+          terraform_version: "1.10.1"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform Files
+        working-directory: environments/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
+        run: |
+          cat > ../../backend.hcl << EOF
+          bucket         = "${{ secrets.TF_STATE_BUCKET }}"
+          key            = "health-notifications/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}/terraform.tfstate"
+          region         = "${{ env.AWS_REGION }}"
+          dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
+          encrypt        = true
+          EOF
+
+          cat > terraform.tfvars << EOF
+          aws_region                     = "${{ env.AWS_REGION }}"
+          environment                    = "${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}"
+          email_addresses                = ${{ secrets[format('{0}_NOTIFICATION_EMAIL', github.event_name == 'workflow_dispatch' && inputs.environment || 'dev')] }}
+          phone_numbers                  = ${{ secrets[format('{0}_NOTIFICATION_PHONE', github.event_name == 'workflow_dispatch' && inputs.environment || 'dev')] }}
+          terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
+          terraform_state_key            = "health-notifications/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}/terraform.tfstate"
+          terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
+          EOF
 
       - name: Terraform Init
-        working-directory: environments/${{ needs.setup.outputs.environment }}
-        run: terraform init -backend-config=../../backend/${{ needs.setup.outputs.environment }}.hcl
+        working-directory: environments/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
+        run: terraform init -backend-config=../../backend.hcl
 
-      - name: Download Plan Artifact
+      - name: Download Plan
         uses: actions/download-artifact@v4
         with:
-          name: terraform-plan-${{ needs.setup.outputs.environment }}
-          path: environments/${{ needs.setup.outputs.environment }}
+          name: tf-plan
+          path: environments/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
 
       - name: Terraform Apply
-        working-directory: environments/${{ needs.setup.outputs.environment }}
+        working-directory: environments/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
         run: terraform apply -auto-approve plan.tfplan
