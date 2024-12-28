@@ -64,10 +64,12 @@ jobs:
           terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
           EOF
 
-          # Debug section to who environment, statebucket, statetable, email and phone numbers are being set
+          # Debug section to who environment, statebucket unmasked, statetable unmasked, email and phone numbers are being set
           echo ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
-          echo ${{ secrets.TF_STATE_BUCKET }}
-          echo ${{ secrets.TF_STATE_LOCK_TABLE }}
+          echo "::add-mask::${{ secrets.TF_STATE_BUCKET }}"
+          echo "::add-mask::${{ secrets.TF_STATE_LOCK_TABLE }}"
+          echo "TF_STATE_BUCKET=${{ secrets.TF_STATE_BUCKET }}"
+          echo "TF_STATE_LOCK_TABLE=${{ secrets.TF_STATE_LOCK_TABLE }}"
           echo ${{ secrets[format('{0}_NOTIFICATION_EMAIL', github.event_name == 'workflow_dispatch' && inputs.environment || 'dev')] }}
           echo ${{ secrets[format('{0}_NOTIFICATION_PHONE', github.event_name == 'workflow_dispatch' && inputs.environment || 'dev')] }}
 
