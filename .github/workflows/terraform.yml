@@ -124,6 +124,7 @@ jobs:
             Environment = "${{ env.ENVIRONMENT }}"
             Service     = "aws-health-notifications"
             ManagedBy   = "terraform"
+            Owner       = "platform-team"
           }
           EOF
 
