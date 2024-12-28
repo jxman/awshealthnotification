@@ -33,20 +33,9 @@ runs:
         aws-secret-access-key: ${{ inputs.aws-secret-key }}
         aws-region: "us-east-1"
 
-    - name: Create backend config
-      shell: bash
-      run: |
-        mkdir -p backend
-        cat > backend/${{ inputs.environment }}.hcl << EOF
-        bucket         = "${{ inputs.tf-state-bucket }}"
-        key            = "health-notifications/${{ inputs.environment }}/terraform.tfstate"
-        region         = "us-east-1"
-        dynamodb_table = "${{ inputs.tf-state-lock-table }}"
-        encrypt        = true
-        EOF
-
     - name: Create tfvars file
       shell: bash
+      working-directory: environments/${{ inputs.environment }} # Add this line
       run: |
         cat > terraform.tfvars << EOF
         aws_region                     = "us-east-1"
@@ -60,6 +49,18 @@ runs:
           Environment = "${{ inputs.environment }}"
           Service     = "aws-health-notifications"
           ManagedBy   = "terraform"
-          Owner       = "platform-team"
         }
+        EOF
+
+    - name: Create backend config
+      shell: bash
+      working-directory: environments/${{ inputs.environment }} # Add this line
+      run: |
+        mkdir -p ../../backend
+        cat > ../../backend/${{ inputs.environment }}.hcl << EOF
+        bucket         = "${{ inputs.tf-state-bucket }}"
+        key            = "health-notifications/${{ inputs.environment }}/terraform.tfstate"
+        region         = "us-east-1"
+        dynamodb_table = "${{ inputs.tf-state-lock-table }}"
+        encrypt        = true
         EOF
