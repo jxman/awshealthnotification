@@ -1,0 +1,65 @@
+name: "Terraform Setup"
+description: "Sets up Terraform environment and creates configuration files"
+
+inputs:
+  environment:
+    description: "Environment (dev/prod)"
+    required: true
+  aws-access-key:
+    required: true
+  aws-secret-key:
+    required: true
+  tf-state-bucket:
+    required: true
+  tf-state-lock-table:
+    required: true
+  notification-email:
+    required: true
+  notification-phone:
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: "1.10.1"
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ inputs.aws-access-key }}
+        aws-secret-access-key: ${{ inputs.aws-secret-key }}
+        aws-region: "us-east-1"
+
+    - name: Create backend config
+      shell: bash
+      run: |
+        mkdir -p backend
+        cat > backend/${{ inputs.environment }}.hcl << EOF
+        bucket         = "${{ inputs.tf-state-bucket }}"
+        key            = "health-notifications/${{ inputs.environment }}/terraform.tfstate"
+        region         = "us-east-1"
+        dynamodb_table = "${{ inputs.tf-state-lock-table }}"
+        encrypt        = true
+        EOF
+
+    - name: Create tfvars file
+      shell: bash
+      run: |
+        cat > terraform.tfvars << EOF
+        aws_region                     = "us-east-1"
+        environment                    = "${{ inputs.environment }}"
+        email_addresses                = ${{ inputs.notification-email }}
+        phone_numbers                  = ${{ inputs.notification-phone }}
+        terraform_state_bucket         = "${{ inputs.tf-state-bucket }}"
+        terraform_state_key            = "health-notifications/${{ inputs.environment }}/terraform.tfstate"
+        terraform_state_dynamodb_table = "${{ inputs.tf-state-lock-table }}"
+        tags = {
+          Environment = "${{ inputs.environment }}"
+          Service     = "aws-health-notifications"
+          ManagedBy   = "terraform"
+          Owner       = "platform-team"
+        }
+        EOF
