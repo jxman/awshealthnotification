@@ -73,7 +73,7 @@ jobs:
             Service     = "aws-health-notifications"
             ManagedBy   = "terraform"
             Owner       = "platform-team"
-            Project     = "${PROJECT_PATH}"
+            Github Repo = "${PROJECT_PATH}"
           }
           EOF
 
@@ -132,6 +132,10 @@ jobs:
           encrypt        = true
           EOF
 
+          # Get the project path from GitHub workspace
+          PROJECT_PATH="${GITHUB_REPOSITORY#*/}"
+
+          # Create tfvars with array format for subscriptions
           cat > terraform.tfvars << EOF
           aws_region                     = "${{ env.AWS_REGION }}"
           environment                    = "${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}"
@@ -144,6 +148,8 @@ jobs:
             Environment = "${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}"
             Service     = "aws-health-notifications"
             ManagedBy   = "terraform"
+            Owner       = "platform-team"
+            Github Repo = "${PROJECT_PATH}"
           }
           EOF
 
