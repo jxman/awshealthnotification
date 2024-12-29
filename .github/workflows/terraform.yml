@@ -73,7 +73,7 @@ jobs:
             Service     = "aws-health-notifications"
             ManagedBy   = "terraform"
             Owner       = "platform-team"
-            Github Repo = "${PROJECT_PATH}"
+            GithubRepo = "${PROJECT_PATH}"
           }
           EOF
 
@@ -149,7 +149,7 @@ jobs:
             Service     = "aws-health-notifications"
             ManagedBy   = "terraform"
             Owner       = "platform-team"
-            Github Repo = "${PROJECT_PATH}"
+            GithubRepo = "${PROJECT_PATH}"
           }
           EOF
 
