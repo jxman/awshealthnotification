@@ -1,3 +1,5 @@
+
+
 resource "aws_cloudwatch_event_rule" "health_events" {
   name        = "${var.environment}-health-event-notifications"
   description = "Captures AWS Health Events for ${var.environment}"

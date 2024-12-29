@@ -1,3 +1,6 @@
+# Purpose: Create an SNS topic and subscriptions for AWS Health events
+
+# SNS Topic for Health Events
 resource "aws_sns_topic" "health_events" {
   name         = "${var.environment}-health-event-notifications"
   display_name = "AWS Health Events - ${var.environment}"
@@ -6,34 +9,18 @@ resource "aws_sns_topic" "health_events" {
 
 # Email Subscriptions
 resource "aws_sns_topic_subscription" "email_subscriptions" {
-  # for_each  = toset(var.email_addresses)
-  # topic_arn = aws_sns_topic.health_events.arn
-  # protocol  = "email"
-  # endpoint  = each.value
-
-  count     = length(var.email_addresses)
+  for_each  = toset(var.email_addresses)
   topic_arn = aws_sns_topic.health_events.arn
   protocol  = "email"
-  endpoint  = var.email_addresses[count.index]
-  lifecycle {
-    create_before_destroy = true
-  }
+  endpoint  = each.value
 }
 
 # SMS Subscriptions
 resource "aws_sns_topic_subscription" "sms_subscriptions" {
-  # for_each  = toset(var.phone_numbers)
-  # topic_arn = aws_sns_topic.health_events.arn
-  # protocol  = "sms"
-  # endpoint  = each.value
-
-  count     = length(var.phone_numbers)
+  for_each  = toset(var.phone_numbers)
   topic_arn = aws_sns_topic.health_events.arn
   protocol  = "sms"
-  endpoint  = var.phone_numbers[count.index]
-  lifecycle {
-    create_before_destroy = true
-  }
+  endpoint  = each.value
 }
 
 # SNS Topic Policy
