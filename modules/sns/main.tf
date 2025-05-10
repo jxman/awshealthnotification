@@ -1,26 +1,10 @@
-# Purpose: Create an SNS topic and subscriptions for AWS Health events
+# Purpose: Create an SNS topic for AWS Health events (subscriptions managed manually)
 
 # SNS Topic for Health Events
 resource "aws_sns_topic" "health_events" {
   name         = "${var.environment}-health-event-notifications"
   display_name = "AWS Health Events - ${var.environment}"
   tags         = var.tags
-}
-
-# Email Subscriptions
-resource "aws_sns_topic_subscription" "email_subscriptions" {
-  for_each  = toset(var.email_addresses)
-  topic_arn = aws_sns_topic.health_events.arn
-  protocol  = "email"
-  endpoint  = each.value
-}
-
-# SMS Subscriptions
-resource "aws_sns_topic_subscription" "sms_subscriptions" {
-  for_each  = toset(var.phone_numbers)
-  topic_arn = aws_sns_topic.health_events.arn
-  protocol  = "sms"
-  endpoint  = each.value
 }
 
 # SNS Topic Policy

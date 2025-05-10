@@ -10,17 +10,6 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
-variable "email_addresses" {
-  description = "List of email addresses for notifications"
-  type        = list(string)
-}
-
-variable "phone_numbers" {
-  description = "List of phone numbers for SMS notifications"
-  type        = list(string)
-  default     = []
-}
-
 variable "terraform_state_bucket" {
   description = "S3 bucket for storing terraform state"
   type        = string
@@ -35,6 +24,7 @@ variable "terraform_state_dynamodb_table" {
   description = "DynamoDB table for terraform state locking"
   type        = string
 }
+
 variable "tags" {
   description = "Default tags for all resources"
   type        = map(string)

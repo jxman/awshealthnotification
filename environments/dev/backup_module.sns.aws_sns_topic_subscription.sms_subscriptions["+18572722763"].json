@@ -1,0 +1,20 @@
+# module.sns.aws_sns_topic_subscription.sms_subscriptions["+18572722763"]:
+resource "aws_sns_topic_subscription" "sms_subscriptions" {
+    arn                             = "arn:aws:sns:us-east-1:600424110307:dev-health-event-notifications:e3885505-e1c8-4951-9d9e-67a1455f004f"
+    confirmation_timeout_in_minutes = 1
+    confirmation_was_authenticated  = true
+    delivery_policy                 = [90mnull[0m[0m
+    endpoint                        = "+18572722763"
+    endpoint_auto_confirms          = false
+    filter_policy                   = [90mnull[0m[0m
+    filter_policy_scope             = [90mnull[0m[0m
+    id                              = "arn:aws:sns:us-east-1:600424110307:dev-health-event-notifications:e3885505-e1c8-4951-9d9e-67a1455f004f"
+    owner_id                        = "600424110307"
+    pending_confirmation            = false
+    protocol                        = "sms"
+    raw_message_delivery            = false
+    redrive_policy                  = [90mnull[0m[0m
+    replay_policy                   = [90mnull[0m[0m
+    subscription_role_arn           = [90mnull[0m[0m
+    topic_arn                       = "arn:aws:sns:us-east-1:600424110307:dev-health-event-notifications"
+}
