@@ -1,136 +1,208 @@
 # AWS Health Event Notifications Infrastructure
 
-This project manages AWS Health Event notifications using Terraform and GitHub Actions, supporting multiple environments with email and SMS notifications.
+This project automates AWS Health Event notifications using Terraform and GitHub Actions, supporting multiple environments with customizable email and SMS alerts.
+
+## Features
+
+- 🔔 Real-time AWS Health Event notifications
+- 📧 Email and SMS notification channels
+- 🌍 Multi-environment support (dev/prod)
+- 🔄 Automated deployments via GitHub Actions
+- 🔒 State management with S3 and DynamoDB
+- 📝 Custom message formatting per channel
+- 🏗️ Modular Terraform architecture
 
 ## Architecture
 
-- Amazon EventBridge for AWS Health event capture
-- Amazon SNS for notifications (email and SMS)
-- Terraform for infrastructure management
-- GitHub Actions for CI/CD
+```
+AWS Health Events → EventBridge → SNS Topic → Email/SMS Subscribers
+```
 
-## Prerequisites
-
-- AWS Account with appropriate permissions
-- GitHub repository access
-- Terraform (v1.10.1 or higher)
-- AWS CLI configured locally
+- **Amazon EventBridge**: Captures and filters AWS Health events
+- **Amazon SNS**: Manages notification distribution
+- **Terraform**: Infrastructure as Code
+- **GitHub Actions**: CI/CD automation
 
 ## Project Structure
 
 ```
 .
-├── README.md
 ├── environments/
-│   ├── dev/
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   └── terraform.tfvars (gitignored)
-│   └── prod/
-│       ├── main.tf
-│       ├── variables.tf
-│       └── terraform.tfvars (gitignored)
+│   ├── dev/            # Development environment
+│   └── prod/           # Production environment
 ├── modules/
-│   ├── eventbridge/
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   └── outputs.tf
-│   └── sns/
-│       ├── main.tf
-│       ├── variables.tf
-│       └── outputs.tf
-└── .github/
-    └── workflows/
-        └── terraform.yml
+│   ├── eventbridge/    # Event processing module
+│   └── sns/            # Notification management module
+├── backend/            # Backend configurations
+├── .github/workflows/  # CI/CD pipeline
+└── scripts/            # Helper scripts
 ```
 
-## Local Setup
+## Prerequisites
 
-1. Clone repository:
+- AWS Account with administrative access
+- GitHub repository access
+- Terraform v1.10.1 or higher
+- AWS CLI configured locally
+- S3 bucket for Terraform state
+- DynamoDB table for state locking
+
+## GitHub Setup
+
+### 1. Configure Environments
+
+Create two GitHub environments: `dev` and `prod`.
+
+### 2. Environment Secrets
+
+For each environment, add:
+
+```
+<ENV>_NOTIFICATION_EMAIL: ["email1@example.com", "email2@example.com"]
+<ENV>_NOTIFICATION_PHONE: ["+1234567890", "+0987654321"]
+```
+
+### 3. Repository Secrets
+
+```
+AWS_ACCESS_KEY_ID: Your AWS access key
+AWS_SECRET_ACCESS_KEY: Your AWS secret key
+TF_STATE_BUCKET: Your S3 bucket name
+TF_STATE_LOCK_TABLE: Your DynamoDB table name
+```
+
+## Local Development
+
+### 1. Clone the Repository
 
 ```bash
 git clone <repository-url>
 cd aws-health-notifications
 ```
 
-2. Create environment backend.hcl (do not commit):
-
-```hcl
-bucket         = "your-terraform-state-bucket"
-key            = "health-notifications/dev/terraform.tfstate"
-region         = "us-east-1"
-dynamodb_table = "your-terraform-lock-table"
-encrypt        = true
-```
-
-3. Create environment tfvars (do not commit):
-
-```hcl
-aws_region                     = "us-east-1"
-environment                    = "dev"  # or "prod"
-email_addresses                = ["email1@example.com", "email2@example.com"]
-phone_numbers                  = ["1234567890"]
-terraform_state_bucket         = "your-terraform-state-bucket"
-terraform_state_key            = "health-notifications/dev/terraform.tfstate"
-terraform_state_dynamodb_table = "your-terraform-lock-table"
-```
-
-## GitHub Setup
-
-1. Configure GitHub Environments (dev and prod)
-2. Add Environment Secrets:
-   ```
-   DEV_NOTIFICATION_EMAIL: ["dev-email1@example.com"]
-   DEV_NOTIFICATION_PHONE: ["1234567890"]
-   PROD_NOTIFICATION_EMAIL: ["prod-email1@example.com"]
-   PROD_NOTIFICATION_PHONE: ["1234567890"]
-   ```
-3. Add Repository Secrets:
-   ```
-   AWS_ACCESS_KEY_ID
-   AWS_SECRET_ACCESS_KEY
-   TF_STATE_BUCKET
-   TF_STATE_LOCK_TABLE
-   ```
-
-## Deployment
-
-### Automated (GitHub Actions)
-
-- Pull Requests: Terraform plan only
-- Push to main: Automatic dev deployment
-- Manual trigger: Select environment (dev/prod)
-
-### Manual (Local)
+### 2. Initialize Environment
 
 ```bash
-cd environments/dev  # or prod
-terraform init -backend-config=../../backend.hcl
+# Use the init script for automated setup
+./init.sh dev
+
+# Or manually:
+cd environments/dev
+terraform init -backend-config=../../backend/dev.hcl
+```
+
+### 3. Create tfvars File
+
+Copy the example and customize:
+
+```bash
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars with your values
+```
+
+### 4. Deploy Locally
+
+```bash
+# Using the deploy script
+./deploy.sh dev
+
+# Or manually:
 terraform plan
 terraform apply
 ```
 
-## Contributing
+## CI/CD Pipeline
 
-1. Create feature branch:
+### Automated Deployments
 
-```bash
-git checkout -b feature/your-feature-name
+- **Pull Requests**: Terraform plan only (for review)
+- **Push to main**: Automatic deployment to dev
+- **Manual trigger**: Select environment for deployment
+
+### Deployment Flow
+
+1. Create feature branch
+2. Make changes
+3. Create pull request
+4. Review Terraform plan
+5. Merge to main
+6. Automatic deployment (dev) or manual approval (prod)
+
+### Production Deployments
+
+Production requires manual approval through GitHub environments:
+
+1. Merge PR to main
+2. GitHub Actions runs Terraform plan
+3. Review and approve deployment in GitHub UI
+4. Terraform apply executes
+
+## Notification Formats
+
+### Email Notifications
+
+Detailed information including:
+
+- Environment name
+- Event details and description
+- Affected service
+- Time information
+- AWS account and region
+
+### SMS Notifications
+
+Concise format:
+
+```
+[Environment] AWS Health Alert: <Service> is <Status>. <Description>
 ```
 
-2. Make changes and commit:
+## Best Practices
 
-```bash
-git add .
-git commit -m "feat: your feature description"
-```
+1. **Testing**: Always test changes in dev before prod
+2. **Reviews**: Require PR reviews for all changes
+3. **Monitoring**: Watch CloudWatch logs for event processing
+4. **Validation**: Verify SNS subscriptions after deployment
+5. **Documentation**: Keep tfvars.example updated
 
-3. Push and create PR:
+## Troubleshooting
 
-```bash
-git push origin feature/your-feature-name
-```
+### Common Issues
+
+1. **Failed Terraform Init**
+
+   - Check S3 bucket permissions
+   - Verify DynamoDB table exists
+   - Confirm AWS credentials
+
+2. **Subscription Confirmation**
+
+   - Check spam folders for confirmation emails
+   - Verify phone numbers are in E.164 format
+
+3. **No Notifications Received**
+   - Confirm EventBridge rule is active
+   - Check SNS topic permissions
+   - Review CloudWatch logs
+
+## Support
+
+- Check GitHub Actions logs for deployment issues
+- Review AWS CloudWatch for event processing logs
+- Contact the platform team for assistance
 
 ## License
 
 MIT License
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make changes and test thoroughly
+4. Submit a pull request
+5. Wait for review and approval
+
+## Changelog
+
+See [deployment.md](deployment.md) for detailed deployment procedures.
