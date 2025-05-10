@@ -44,9 +44,6 @@ jobs:
       - name: Setup Terraform Files
         working-directory: environments/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
         run: |
-          # Debug current values
-          echo "Environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}"
-
           # Create backend config
           cat > ../../backend.hcl << EOF
           bucket         = "${{ secrets.TF_STATE_BUCKET }}"
@@ -59,12 +56,10 @@ jobs:
           # Get the project path from GitHub workspace
           PROJECT_PATH="${GITHUB_REPOSITORY#*/}"
 
-          # Create tfvars with array format for subscriptions
+          # Create tfvars without subscription variables
           cat > terraform.tfvars << EOF
           aws_region                     = "${{ env.AWS_REGION }}"
           environment                    = "${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}"
-          email_addresses                = ${{ secrets[format('{0}_NOTIFICATION_EMAIL', github.event_name == 'workflow_dispatch' && inputs.environment || 'dev')] }}
-          phone_numbers                  = ${{ secrets[format('{0}_NOTIFICATION_PHONE', github.event_name == 'workflow_dispatch' && inputs.environment || 'dev')] }}
           terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
           terraform_state_key            = "health-notifications/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}/terraform.tfstate"
           terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
@@ -76,12 +71,6 @@ jobs:
             GithubRepo = "${PROJECT_PATH}"
           }
           EOF
-
-          # Debug generated files
-          echo "Backend config:"
-          cat ../../backend.hcl
-          echo "Terraform vars (with masked values):"
-          cat terraform.tfvars | sed 's/\(email_addresses.*=\).*/\1 [***]/g; s/\(phone_numbers.*=\).*/\1 [***]/g'
 
       - name: Terraform Init
         working-directory: environments/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
@@ -135,12 +124,10 @@ jobs:
           # Get the project path from GitHub workspace
           PROJECT_PATH="${GITHUB_REPOSITORY#*/}"
 
-          # Create tfvars with array format for subscriptions
+          # Create tfvars without subscription variables
           cat > terraform.tfvars << EOF
           aws_region                     = "${{ env.AWS_REGION }}"
           environment                    = "${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}"
-          email_addresses                = ${{ secrets[format('{0}_NOTIFICATION_EMAIL', github.event_name == 'workflow_dispatch' && inputs.environment || 'dev')] }}
-          phone_numbers                  = ${{ secrets[format('{0}_NOTIFICATION_PHONE', github.event_name == 'workflow_dispatch' && inputs.environment || 'dev')] }}
           terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
           terraform_state_key            = "health-notifications/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}/terraform.tfstate"
           terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"

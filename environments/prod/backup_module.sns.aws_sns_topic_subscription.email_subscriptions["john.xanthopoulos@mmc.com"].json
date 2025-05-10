@@ -1,0 +1,20 @@
+# module.sns.aws_sns_topic_subscription.email_subscriptions["john.xanthopoulos@mmc.com"]:
+resource "aws_sns_topic_subscription" "email_subscriptions" {
+    arn                             = "arn:aws:sns:us-east-1:600424110307:prod-health-event-notifications:1fde1501-e39f-4527-9385-a738f07004a9"
+    confirmation_timeout_in_minutes = 1
+    confirmation_was_authenticated  = false
+    delivery_policy                 = [90mnull[0m[0m
+    endpoint                        = "john.xanthopoulos@mmc.com"
+    endpoint_auto_confirms          = false
+    filter_policy                   = [90mnull[0m[0m
+    filter_policy_scope             = [90mnull[0m[0m
+    id                              = "arn:aws:sns:us-east-1:600424110307:prod-health-event-notifications:1fde1501-e39f-4527-9385-a738f07004a9"
+    owner_id                        = "600424110307"
+    pending_confirmation            = true
+    protocol                        = "email"
+    raw_message_delivery            = false
+    redrive_policy                  = [90mnull[0m[0m
+    replay_policy                   = [90mnull[0m[0m
+    subscription_role_arn           = [90mnull[0m[0m
+    topic_arn                       = "arn:aws:sns:us-east-1:600424110307:prod-health-event-notifications"
+}
