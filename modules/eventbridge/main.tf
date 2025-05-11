@@ -8,43 +8,25 @@ resource "aws_cloudwatch_event_rule" "health_events" {
   })
 }
 
-# Create a ZIP file for the Lambda function BEFORE the function reference
-# This ensures the ZIP file exists before the Lambda tries to use it
-data "archive_file" "lambda_zip" {
-  type        = "zip"
-  output_path = "${path.module}/lambda_function.zip"
-
-  source {
-    content  = file("${path.module}/lambda/index.js")
-    filename = "index.js"
-  }
-}
-
-# Create the Lambda function
+# Create the Lambda function using a pre-built ZIP file
 resource "aws_lambda_function" "health_formatter" {
   function_name = "${var.environment}-health-event-formatter"
   role          = aws_iam_role.lambda_role.arn
   handler       = "index.handler"
-  runtime       = "nodejs16.x" # Using 16.x for better compatibility
+  runtime       = "nodejs16.x"
   timeout       = 30
   memory_size   = 128
 
-  # Reference the ZIP file created by the archive_file data source
-  filename         = data.archive_file.lambda_zip.output_path
-  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
+  # Reference the existing ZIP file
+  filename         = "${path.module}/lambda_function.zip"
+  source_code_hash = filebase64sha256("${path.module}/lambda_function.zip")
 
   environment {
     variables = {
-      ENVIRONMENT   = upper(var.environment)
-      SNS_TOPIC_ARN = var.sns_topic_arn
+      ENVIRONMENT    = upper(var.environment)
+      SNS_TOPIC_ARN  = var.sns_topic_arn
     }
   }
-
-  depends_on = [
-    data.archive_file.lambda_zip,
-    aws_iam_role_policy.lambda_logs_policy,
-    aws_iam_role_policy.lambda_sns_policy
-  ]
 
   tags = var.tags
 }
@@ -81,7 +63,7 @@ resource "aws_iam_role_policy" "lambda_sns_policy" {
         Action = [
           "sns:Publish"
         ]
-        Effect   = "Allow"
+        Effect = "Allow"
         Resource = var.sns_topic_arn
       }
     ]
@@ -102,7 +84,7 @@ resource "aws_iam_role_policy" "lambda_logs_policy" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-        Effect   = "Allow"
+        Effect = "Allow"
         Resource = "arn:aws:logs:*:*:*"
       }
     ]
@@ -114,10 +96,6 @@ resource "aws_cloudwatch_event_target" "lambda_target" {
   rule      = aws_cloudwatch_event_rule.health_events.name
   target_id = "HealthEventLambdaTarget"
   arn       = aws_lambda_function.health_formatter.arn
-
-  depends_on = [
-    aws_lambda_function.health_formatter
-  ]
 }
 
 # Give EventBridge permission to invoke the Lambda
@@ -127,8 +105,4 @@ resource "aws_lambda_permission" "allow_eventbridge" {
   function_name = aws_lambda_function.health_formatter.function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.health_events.arn
-
-  depends_on = [
-    aws_lambda_function.health_formatter
-  ]
 }
