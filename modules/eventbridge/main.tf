@@ -8,17 +8,18 @@ resource "aws_cloudwatch_event_rule" "health_events" {
   })
 }
 
-# Create the Lambda function
+# Create the Lambda function using a pre-built ZIP file
 resource "aws_lambda_function" "health_formatter" {
   function_name = "${var.environment}-health-event-formatter"
   role          = aws_iam_role.lambda_role.arn
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs16.x"
   timeout       = 30
   memory_size   = 128
 
-  filename         = data.archive_file.lambda_zip.output_path
-  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
+  # Reference the existing ZIP file
+  filename         = "${path.module}/lambda_function.zip"
+  source_code_hash = filebase64sha256("${path.module}/lambda_function.zip")
 
   environment {
     variables = {
@@ -28,17 +29,6 @@ resource "aws_lambda_function" "health_formatter" {
   }
 
   tags = var.tags
-}
-
-# Create a ZIP file for the Lambda function
-data "archive_file" "lambda_zip" {
-  type        = "zip"
-  output_path = "${path.module}/lambda_function.zip"
-  
-  source {
-    content  = file("${path.module}/lambda/index.js")
-    filename = "index.js"
-  }
 }
 
 # Create the IAM role for the Lambda function
