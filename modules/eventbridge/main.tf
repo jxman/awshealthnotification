@@ -30,6 +30,52 @@ resource "aws_cloudwatch_event_target" "sns" {
       eventArn          = "$.detail.eventArn"
     }
 
-    input_template = "AWS Health Event Notification - ${upper(var.environment)} Environment\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🔔 NOTIFICATION SUMMARY\n\nEnvironment: ${upper(var.environment)}\nService Affected: <healthService>\nStatus: <statusCode>\nEvent Type: <eventTypeCode>\nCategory: <eventTypeCategory>\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n📅 EVENT TIMELINE\n\nTime Detected: <eventTime>\nStart Time: <startTime>\nEnd Time: <endTime>\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n📌 EVENT DETAILS\n\nEvent ARN: <eventArn>\nRegion: <region>\nAccount: <account>\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n📝 EVENT DESCRIPTION\n\n<eventDescription>\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n⚙️ SOURCE INFORMATION\n\nEvent Source: <eventSource>\nEvent Type: <eventType>\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nThis is an automated notification from AWS Health Event Monitoring System.\nFor more information, please check your AWS Personal Health Dashboard."
+    input_template = <<-EOF
+"AWS Health Event Notification - ${upper(var.environment)} Environment
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔔 NOTIFICATION SUMMARY
+
+Environment: ${upper(var.environment)}
+Service Affected: <healthService>
+Status: <statusCode>
+Event Type: <eventTypeCode>
+Category: <eventTypeCategory>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📅 EVENT TIMELINE
+
+Time Detected: <eventTime>
+Start Time: <startTime>
+End Time: <endTime>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 EVENT DETAILS
+
+Event ARN: <eventArn>
+Region: <region>
+Account: <account>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 EVENT DESCRIPTION
+
+<eventDescription>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚙️ SOURCE INFORMATION
+
+Event Source: <eventSource>
+Event Type: <eventType>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This is an automated notification from AWS Health Event Monitoring System.
+For more information, please check your AWS Personal Health Dashboard."
+EOF
   }
 }
