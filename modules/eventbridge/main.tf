@@ -13,24 +13,25 @@ resource "aws_cloudwatch_event_target" "sns" {
   target_id = "HealthNotificationTarget"
   arn       = var.sns_topic_arn
 
-  # Option 1: No transformation - send the raw event
-  # This is the simplest and most reliable approach
-
-  # Option 2: Use a minimal transformation that EventBridge can validate
   input_transformer {
     input_paths = {
-      env         = "$.account"
       service     = "$.detail.service"
       status      = "$.detail.statusCode"
       eventType   = "$.detail.eventTypeCode"
+      category    = "$.detail.eventTypeCategory"
       description = "$.detail.eventDescription[0].latestDescription"
+      eventArn    = "$.detail.eventArn"
+      startTime   = "$.detail.startTime"
+      endTime     = "$.detail.endTime"
       eventTime   = "$.time"
+      region      = "$.region"
+      account     = "$.account"
     }
 
-    # This template creates valid JSON that EventBridge will accept
+    # Enhanced formatting that EventBridge should accept
     input_template = <<EOF
 {
-  "default": "${upper(var.environment)} Health Alert: <service> - <status> - <eventType>\n\n<description>\n\nTime: <eventTime>"
+  "default": "🔔 AWS Health Event - ${upper(var.environment)} Environment\n----------------------------------------\n\n📊 Event Summary:\n• Service: <service>\n• Status: <status>\n• Type: <eventType>\n• Category: <category>\n\n🕒 Timeline:\n• Detected: <eventTime>\n• Started: <startTime>\n• Ended: <endTime>\n\n📝 Description:\n<description>\n\n🔍 Details:\n• Event ARN: <eventArn>\n• Region: <region>\n• Account: <account>\n\n----------------------------------------\nAWS Health Event Monitoring System"
 }
 EOF
   }
