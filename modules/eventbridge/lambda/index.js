@@ -1,4 +1,4 @@
-// Lambda function to format AWS Health event notifications with HTML email
+// Lambda function to format AWS Health event notifications with enhanced plain text
 exports.handler = async (event) => {
   console.log('Event received:', JSON.stringify(event, null, 2));
   
@@ -16,48 +16,53 @@ exports.handler = async (event) => {
   const account = event.account || 'Unknown';
   const environment = process.env.ENVIRONMENT || 'UNKNOWN';
   
-  // Get status color and icon
-  const statusColor = status === 'closed' ? '#2ea043' : status === 'open' ? '#d13212' : '#0969da';
-  const statusIcon = status === 'closed' ? '✅' : status === 'open' ? '⚠️' : '🔔';
+  // Get status emoji
+  const statusEmoji = status === 'closed' ? '✅' : status === 'open' ? '⚠️' : '🔔';
   
-  // Create plain text version
-  const plainTextMessage = `
-AWS HEALTH EVENT - ${environment} ENVIRONMENT
-============================================
+  // Create enhanced plain text message (without box borders)
+  const enhancedMessage = `
+=====================================================================
+            ${statusEmoji}  AWS HEALTH EVENT - ${environment} ENVIRONMENT  ${statusEmoji}
+=====================================================================
 
-EVENT SUMMARY:
-- Service:    ${service}
-- Status:     ${status.toUpperCase()}
-- Type:       ${eventType}
-- Category:   ${category}
+📊  EVENT SUMMARY
+    -------------------------------------------------------------
+    • Service:    ${service}
+    • Status:     ${status.toUpperCase()}
+    • Type:       ${eventType}
+    • Category:   ${category}
 
-TIMELINE:
-- Detected:   ${eventTime}
-- Started:    ${startTime}
-- Ended:      ${endTime}
+🕒  TIMELINE
+    -------------------------------------------------------------
+    • Detected:   ${eventTime}
+    • Started:    ${startTime}
+    • Ended:      ${endTime}
 
-DESCRIPTION:
-${description}
+📝  DESCRIPTION
+    -------------------------------------------------------------
+    ${description}
 
-EVENT DETAILS:
-- Event ARN:  ${eventArn}
-- Region:     ${region}
-- Account:    ${account}
+🔍  EVENT DETAILS
+    -------------------------------------------------------------
+    • Event ARN:  ${eventArn}
+    • Region:     ${region}
+    • Account:    ${account}
 
-============================================
-AWS HEALTH EVENT MONITORING SYSTEM`;
+=====================================================================
+                 AWS HEALTH EVENT MONITORING SYSTEM
+=====================================================================`;
 
   // Create a subject line
-  const subject = `${environment} ALERT: ${service} ${status.toUpperCase()} - ${eventType}`;
+  const subject = `${statusEmoji} ${environment} ALERT: ${service} ${status.toUpperCase()} - ${eventType}`;
 
-  // Publish to SNS without trying to use HTML
+  // Publish to SNS
   const AWS = require('aws-sdk');
   const sns = new AWS.SNS();
   
   const params = {
     TopicArn: process.env.SNS_TOPIC_ARN,
     Subject: subject,
-    Message: plainTextMessage
+    Message: enhancedMessage
   };
   
   try {
