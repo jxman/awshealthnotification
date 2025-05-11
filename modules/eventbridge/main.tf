@@ -13,69 +13,25 @@ resource "aws_cloudwatch_event_target" "sns" {
   target_id = "HealthNotificationTarget"
   arn       = var.sns_topic_arn
 
+  # Option 1: No transformation - send the raw event
+  # This is the simplest and most reliable approach
+
+  # Option 2: Use a minimal transformation that EventBridge can validate
   input_transformer {
     input_paths = {
-      eventSource       = "$.source"
-      eventType         = "$.detail-type"
-      eventTime         = "$.time"
-      region            = "$.region"
-      account           = "$.account"
-      healthService     = "$.detail.service"
-      eventDescription  = "$.detail.eventDescription[0].latestDescription"
-      eventTypeCode     = "$.detail.eventTypeCode"
-      eventTypeCategory = "$.detail.eventTypeCategory"
-      statusCode        = "$.detail.statusCode"
-      startTime         = "$.detail.startTime"
-      endTime           = "$.detail.endTime"
-      eventArn          = "$.detail.eventArn"
+      env         = "$.account"
+      service     = "$.detail.service"
+      status      = "$.detail.statusCode"
+      eventType   = "$.detail.eventTypeCode"
+      description = "$.detail.eventDescription[0].latestDescription"
+      eventTime   = "$.time"
     }
 
-    input_template = <<-EOF
-"AWS Health Event Notification - ${upper(var.environment)} Environment
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🔔 NOTIFICATION SUMMARY
-
-Environment: ${upper(var.environment)}
-Service Affected: <healthService>
-Status: <statusCode>
-Event Type: <eventTypeCode>
-Category: <eventTypeCategory>
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📅 EVENT TIMELINE
-
-Time Detected: <eventTime>
-Start Time: <startTime>
-End Time: <endTime>
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📌 EVENT DETAILS
-
-Event ARN: <eventArn>
-Region: <region>
-Account: <account>
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📝 EVENT DESCRIPTION
-
-<eventDescription>
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-⚙️ SOURCE INFORMATION
-
-Event Source: <eventSource>
-Event Type: <eventType>
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-This is an automated notification from AWS Health Event Monitoring System.
-For more information, please check your AWS Personal Health Dashboard."
+    # This template creates valid JSON that EventBridge will accept
+    input_template = <<EOF
+{
+  "default": "${upper(var.environment)} Health Alert: <service> - <status> - <eventType>\n\n<description>\n\nTime: <eventTime>"
+}
 EOF
   }
 }
