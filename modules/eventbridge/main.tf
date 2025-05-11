@@ -13,26 +13,18 @@ resource "aws_cloudwatch_event_target" "sns" {
   target_id = "HealthNotificationTarget"
   arn       = var.sns_topic_arn
 
+  # Very basic input transformer that EventBridge accepts
   input_transformer {
     input_paths = {
       service     = "$.detail.service"
       status      = "$.detail.statusCode"
       eventType   = "$.detail.eventTypeCode"
-      category    = "$.detail.eventTypeCategory"
       description = "$.detail.eventDescription[0].latestDescription"
-      eventArn    = "$.detail.eventArn"
-      startTime   = "$.detail.startTime"
-      endTime     = "$.detail.endTime"
-      eventTime   = "$.time"
       region      = "$.region"
-      account     = "$.account"
+      time        = "$.time"
     }
 
-    # Enhanced formatting that EventBridge should accept
-    input_template = <<EOF
-{
-  "default": "🔔 AWS Health Event - ${upper(var.environment)} Environment\n----------------------------------------\n\n📊 Event Summary:\n• Service: <service>\n• Status: <status>\n• Type: <eventType>\n• Category: <category>\n\n🕒 Timeline:\n• Detected: <eventTime>\n• Started: <startTime>\n• Ended: <endTime>\n\n📝 Description:\n<description>\n\n🔍 Details:\n• Event ARN: <eventArn>\n• Region: <region>\n• Account: <account>\n\n----------------------------------------\nAWS Health Event Monitoring System"
-}
-EOF
+    # Simple template that works reliably with EventBridge
+    input_template = "${upper(var.environment)} Health Alert: <service> (<status>)\n\n<description>\n\nRegion: <region>\nTime: <time>"
   }
 }
