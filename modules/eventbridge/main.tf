@@ -7,7 +7,20 @@ resource "aws_cloudwatch_event_rule" "health_events" {
     detail-type = ["AWS Health Event"]
   })
 
-  tags = local.resource_tags
+  tags = var.tags
+}
+
+# Define local variables for tags
+locals {
+  resource_tags = merge(
+    {
+      Name        = "${var.environment}-health-event-notifications"
+      Environment = var.environment
+      Service     = "aws-health-notifications"
+      ManagedBy   = "terraform"
+    },
+    var.tags
+  )
 }
 
 # Create a ZIP file for the Lambda function

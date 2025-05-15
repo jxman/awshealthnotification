@@ -1,3 +1,16 @@
+# Define local variables for tags
+locals {
+  resource_tags = merge(
+    {
+      Name        = "${var.environment}-health-event-notifications"
+      Environment = var.environment
+      Service     = "aws-health-notifications"
+      ManagedBy   = "terraform"
+    },
+    var.tags
+  )
+}
+
 resource "aws_sns_topic" "health_events" {
   name         = "${var.environment}-health-event-notifications"
   display_name = "AWS Health Events - ${var.environment}"
