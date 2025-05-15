@@ -1,7 +1,7 @@
 variable "environment" {
   description = "Environment name"
   type        = string
-  default     = "dev"
+  default     = "dev" # Change to "prod" for production environment
 }
 
 variable "aws_region" {
@@ -25,11 +25,32 @@ variable "terraform_state_dynamodb_table" {
   type        = string
 }
 
+variable "github_org" {
+  description = "GitHub organization name for the repository"
+  type        = string
+  default     = "xman" # Replace with your actual GitHub org name
+}
+
+variable "github_repo" {
+  description = "GitHub repository name"
+  type        = string
+  default     = "aws-health-notifications" # Replace with your actual repo name
+}
+
+variable "owner_team" {
+  description = "Team responsible for these resources"
+  type        = string
+  default     = "platform-team"
+}
+
+variable "cost_center" {
+  description = "Cost center for billing purposes"
+  type        = string
+  default     = "platform-engineering"
+}
+
 variable "tags" {
-  description = "Default tags for all resources"
+  description = "Additional resource tags"
   type        = map(string)
-  default = {
-    Environment = "dev"
-    Service     = "aws-health-notifications"
-  }
+  default     = {}
 }

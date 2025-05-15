@@ -1,10 +1,14 @@
-# Purpose: Create an SNS topic for AWS Health events (subscriptions managed manually)
-
-# SNS Topic for Health Events
 resource "aws_sns_topic" "health_events" {
   name         = "${var.environment}-health-event-notifications"
   display_name = "AWS Health Events - ${var.environment}"
-  tags         = var.tags
+
+  tags = merge(
+    local.resource_tags,
+    {
+      Name    = "${var.environment}-health-event-notifications"
+      Service = "notifications"
+    }
+  )
 }
 
 # SNS Topic Policy

@@ -1,12 +1,21 @@
 aws_region                     = "us-east-1"
-environment                    = "dev"  # or "prod"
+environment                    = "prod"
 terraform_state_bucket         = "your-terraform-state-bucket"
 terraform_state_key            = "health-notifications/{environment}/terraform.tfstate"
 terraform_state_dynamodb_table = "your-terraform-lock-table"
+github_org                     = "xman"
+github_repo                    = "aws-health-notifications"
+owner_team                     = "platform-team"
+cost_center                    = "platform-engineering"
 
 tags = {
-  Environment = "dev"  # or "prod"
+  Environment = "prod"
   Service     = "aws-health-notifications"
   ManagedBy   = "terraform"
   Owner       = "platform-team"
+  Project     = "health-monitoring"
+  Application = "aws-health-notifications"
+  Criticality = "medium"
+  Backup      = "false"
+  Compliance  = "none"
 }

@@ -6,9 +6,22 @@ resource "aws_cloudwatch_event_rule" "health_events" {
     source      = ["aws.health"]
     detail-type = ["AWS Health Event"]
   })
+
+  tags = local.resource_tags
 }
 
-# Create the Lambda function using a pre-built ZIP file
+# Create a ZIP file for the Lambda function
+data "archive_file" "lambda_zip" {
+  type        = "zip"
+  output_path = "${path.module}/lambda_function.zip"
+
+  source {
+    content  = file("${path.module}/lambda/index.js")
+    filename = "index.js"
+  }
+}
+
+# Create the Lambda function
 resource "aws_lambda_function" "health_formatter" {
   function_name = "${var.environment}-health-event-formatter"
   role          = aws_iam_role.lambda_role.arn
@@ -17,18 +30,24 @@ resource "aws_lambda_function" "health_formatter" {
   timeout       = 30
   memory_size   = 128
 
-  # Reference the existing ZIP file
-  filename         = "${path.module}/lambda_function.zip"
-  source_code_hash = filebase64sha256("${path.module}/lambda_function.zip")
+  # Reference the ZIP file created by the archive_file data source
+  filename         = data.archive_file.lambda_zip.output_path
+  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 
   environment {
     variables = {
-      ENVIRONMENT    = upper(var.environment)
-      SNS_TOPIC_ARN  = var.sns_topic_arn
+      ENVIRONMENT   = upper(var.environment)
+      SNS_TOPIC_ARN = var.sns_topic_arn
     }
   }
 
-  tags = var.tags
+  tags = merge(
+    local.resource_tags,
+    {
+      Name     = "${var.environment}-health-event-formatter"
+      Function = "event-formatting"
+    }
+  )
 }
 
 # Create the IAM role for the Lambda function
@@ -48,7 +67,13 @@ resource "aws_iam_role" "lambda_role" {
     ]
   })
 
-  tags = var.tags
+  tags = merge(
+    local.resource_tags,
+    {
+      Name = "${var.environment}-health-formatter-role"
+      Role = "lambda-execution"
+    }
+  )
 }
 
 # Attach the SNS publish policy to the Lambda role
@@ -63,7 +88,7 @@ resource "aws_iam_role_policy" "lambda_sns_policy" {
         Action = [
           "sns:Publish"
         ]
-        Effect = "Allow"
+        Effect   = "Allow"
         Resource = var.sns_topic_arn
       }
     ]
@@ -84,7 +109,7 @@ resource "aws_iam_role_policy" "lambda_logs_policy" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-        Effect = "Allow"
+        Effect   = "Allow"
         Resource = "arn:aws:logs:*:*:*"
       }
     ]
