@@ -56,3 +56,10 @@ module "eventbridge" {
   sns_topic_arn = module.sns.topic_arn
   tags          = local.resource_tags
 }
+
+module "resource_groups" {
+  source = "../../modules/resource_groups"
+
+  environment = var.environment
+  tags        = local.resource_tags
+}
