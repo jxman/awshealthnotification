@@ -1,5 +1,6 @@
 // Lambda function to format AWS Health event notifications with enhanced plain text
 // Updated for nodejs20.x with AWS SDK v3
+// Force deployment: 2025-05-28T03:35:00Z
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 
 // Initialize SNS client - AWS Lambda automatically provides region

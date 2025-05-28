@@ -23,18 +23,26 @@ locals {
   )
 }
 
-# Create a ZIP file for the Lambda function
+# Create a ZIP file for the Lambda function with proper change detection
 data "archive_file" "lambda_zip" {
-  type        = "zip"
-  output_path = "${path.module}/lambda_function.zip"
-
-  source {
-    content  = file("${path.module}/lambda/index.js")
-    filename = "index.js"
-  }
+  type             = "zip"
+  output_path      = "${path.module}/lambda_function.zip"
+  output_file_mode = "0666"
+  
+  # Use source_dir to include all files in the lambda directory
+  source_dir = "${path.module}/lambda"
+  
+  # Add excludes to prevent unwanted files
+  excludes = [
+    "*.pyc",
+    "__pycache__",
+    ".DS_Store",
+    "*.swp",
+    "*.tmp"
+  ]
 }
 
-# Create the Lambda function
+# Create the Lambda function with enhanced change detection
 resource "aws_lambda_function" "health_formatter" {
   function_name = "${var.environment}-health-event-formatter"
   role          = aws_iam_role.lambda_role.arn
@@ -46,6 +54,12 @@ resource "aws_lambda_function" "health_formatter" {
   # Reference the ZIP file created by the archive_file data source
   filename         = data.archive_file.lambda_zip.output_path
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
+  
+  # Publish a new version when code changes
+  publish = true
+  
+  # Ensure Lambda updates when code changes
+  depends_on = [null_resource.lambda_trigger]
 
   environment {
     variables = {
@@ -147,3 +161,17 @@ resource "aws_lambda_permission" "allow_eventbridge" {
 
 # Data source for current AWS region
 data "aws_region" "current" {}
+
+# Null resource to trigger Lambda updates when source code changes
+resource "null_resource" "lambda_trigger" {
+  # This will change whenever the Lambda source code changes
+  triggers = {
+    source_code_hash = data.archive_file.lambda_zip.output_base64sha256
+    lambda_file_hash = filebase64sha256("${path.module}/lambda/index.js")
+  }
+  
+  # Optional: Clean up old ZIP files
+  provisioner "local-exec" {
+    command = "find ${path.module} -name 'lambda_function_*.zip' -type f -not -name '${basename(data.archive_file.lambda_zip.output_path)}' -delete || true"
+  }
+}

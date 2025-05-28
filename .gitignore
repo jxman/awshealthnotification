@@ -48,3 +48,6 @@ Thumbs.db
 *.swp
 *.swo
 
+# Generated Lambda ZIP files
+modules/*/lambda_function*.zip
+
