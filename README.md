@@ -1,324 +1,483 @@
 # AWS Health Event Notifications Infrastructure
 
-This project automates AWS Health Event notifications using Terraform and GitHub Actions, supporting multiple environments with customizable email and SMS alerts.
+<!-- Badges -->
 
-## Features
+[![Terraform](https://img.shields.io/badge/Terraform-%23623CE4.svg?style=for-the-badge&logo=terraform&logoColor=white)](https://terraform.io)
+[![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com)
+[![GitHub Actions](https://img.shields.io/badge/github%20actions-%232671E5.svg?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/features/actions)
+[![Lambda](https://img.shields.io/badge/AWS%20Lambda-FF9900?style=for-the-badge&logo=awslambda&logoColor=white)](https://aws.amazon.com/lambda/)
 
-- 🔔 Real-time AWS Health Event notifications
-- 📧 Enhanced email formatting with emojis and visual structure
-- 🌍 Multi-environment support (dev/prod)
-- 🔄 Automated deployments via GitHub Actions
-- 🔒 State management with S3 and DynamoDB
-- 📝 Custom message formatting with Lambda function
-- 🏗️ Modular Terraform architecture
+[![Terraform Version](https://img.shields.io/badge/terraform-%3E%3D1.0.0-blue)](https://www.terraform.io/)
+[![AWS Provider](https://img.shields.io/badge/aws%20provider-~%3E%205.0-orange)](https://registry.terraform.io/providers/hashicorp/aws/latest)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
-## Architecture
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/your-org/aws-health-notifications/graphs/commit-activity)
+[![GitHub Issues](https://img.shields.io/github/issues/your-org/aws-health-notifications)](https://github.com/your-org/aws-health-notifications/issues)
+[![GitHub Stars](https://img.shields.io/github/stars/your-org/aws-health-notifications?style=social)](https://github.com/your-org/aws-health-notifications/stargazers)
 
+---
+
+## 📋 Table of Contents
+
+- [Overview](#-overview)
+- [Features](#-features)
+- [Architecture](#-architecture)
+- [Project Structure](#-project-structure)
+- [Prerequisites](#-prerequisites)
+- [Quick Start](#-quick-start)
+- [Configuration](#-configuration)
+- [Deployment](#-deployment)
+- [Testing](#-testing)
+- [Monitoring](#-monitoring)
+- [Troubleshooting](#-troubleshooting)
+- [Contributing](#-contributing)
+- [Security](#-security)
+- [License](#-license)
+
+## 🎯 Overview
+
+This project automates AWS Health Event notifications using Terraform and GitHub Actions, supporting multiple environments with customizable email and SMS alerts. It provides real-time monitoring of AWS service health events with enhanced formatting and reliable delivery.
+
+## ✨ Features
+
+- 🔔 **Real-time AWS Health Event notifications**
+- 📧 **Enhanced email formatting** with emojis and visual structure
+- 📱 **SMS support** for critical alerts
+- 🌍 **Multi-environment support** (dev/prod/staging)
+- 🔄 **Automated CI/CD deployments** via GitHub Actions
+- 🔒 **Secure state management** with S3 and DynamoDB
+- 📝 **Custom message formatting** with Lambda function
+- 🏗️ **Modular Terraform architecture**
+- 🏷️ **Comprehensive resource tagging**
+- 📊 **Resource grouping** for better organization
+- 🛡️ **IAM least privilege** security model
+
+## 🏗️ Architecture
+
+```mermaid
+graph TB
+    A[AWS Health Events] --> B[Amazon EventBridge]
+    B --> C[AWS Lambda Function]
+    C --> D[Amazon SNS Topic]
+    D --> E[Email Subscribers]
+    D --> F[SMS Subscribers]
+
+    G[Terraform] --> H[GitHub Actions]
+    H --> I[Multi-Environment Deployment]
+
+    J[S3 Backend] --> K[State Management]
+    L[DynamoDB] --> K
+
+    subgraph "Environments"
+        M[Development]
+        N[Production]
+    end
+
+    I --> M
+    I --> N
 ```
-AWS Health Events → EventBridge → Lambda Function → SNS Topic → Email/SMS Subscribers
-```
+
+**Components:**
 
 - **Amazon EventBridge**: Captures and filters AWS Health events
 - **AWS Lambda**: Formats notifications with enhanced readability
 - **Amazon SNS**: Manages notification distribution
-- **Terraform**: Infrastructure as Code
-- **GitHub Actions**: CI/CD automation
+- **Terraform**: Infrastructure as Code management
+- **GitHub Actions**: Automated CI/CD pipeline
 
-## Project Structure
-
-```
-.
-├── environments/
-│   ├── dev/            # Development environment
-│   └── prod/           # Production environment
-├── modules/
-│   ├── eventbridge/    # Event processing & Lambda formatting
-│   │   └── lambda/     # Lambda code for formatting notifications
-│   └── sns/            # Notification management module
-├── backend/            # Backend configurations
-├── .github/workflows/  # CI/CD pipeline
-└── scripts/            # Helper scripts
-```
-
-## Prerequisites
-
-- AWS Account with administrative access
-- GitHub repository access
-- Terraform v1.10.1 or higher
-- AWS CLI configured locally
-- S3 bucket for Terraform state
-- DynamoDB table for state locking
-
-## GitHub Setup
-
-### 1. Configure Environments
-
-Create two GitHub environments: `dev` and `prod`.
-
-### 2. Repository Secrets
+## 📁 Project Structure
 
 ```
-AWS_ACCESS_KEY_ID: Your AWS access key
-AWS_SECRET_ACCESS_KEY: Your AWS secret key
-TF_STATE_BUCKET: Your S3 bucket name
-TF_STATE_LOCK_TABLE: Your DynamoDB table name
+├── 📁 .github/
+│   └── 📁 workflows/
+│       └── 📄 terraform.yml          # CI/CD pipeline
+├── 📁 backend/                       # Backend configurations
+│   ├── 📄 dev.hcl
+│   └── 📄 prod.hcl
+├── 📁 environments/                  # Environment-specific configs
+│   ├── 📁 dev/
+│   │   ├── 📄 main.tf
+│   │   ├── 📄 variables.tf
+│   │   ├── 📄 outputs.tf
+│   │   └── 📄 terraform.tfvars.example
+│   └── 📁 prod/
+│       ├── 📄 main.tf
+│       ├── 📄 variables.tf
+│       ├── 📄 outputs.tf
+│       └── 📄 terraform.tfvars.example
+├── 📁 modules/                       # Reusable Terraform modules
+│   ├── 📁 eventbridge/              # Event processing & Lambda
+│   │   ├── 📁 lambda/
+│   │   │   └── 📄 index.js          # Notification formatter
+│   │   ├── 📄 main.tf
+│   │   ├── 📄 variables.tf
+│   │   └── 📄 outputs.tf
+│   ├── 📁 sns/                      # Notification management
+│   │   ├── 📄 main.tf
+│   │   ├── 📄 variables.tf
+│   │   └── 📄 outputs.tf
+│   └── 📁 resource_groups/          # Resource organization
+│       ├── 📄 main.tf
+│       ├── 📄 variables.tf
+│       └── 📄 outputs.tf
+├── 📄 README.md
+├── 📄 TAGGING_STRATEGY.md           # Tagging guidelines
+├── 📄 deployment.md                 # Deployment procedures
+├── 📄 .gitignore
+├── 📄 init.sh                       # Environment initialization
+├── 📄 deploy.sh                     # Deployment helper
+└── 📄 test-*.sh                     # Testing scripts
 ```
 
-## Local Development
+## 📋 Prerequisites
 
-### 1. Clone the Repository
+### Required Tools
+
+- **AWS Account** with administrative access
+- **Terraform** v1.0.0+ ([Install Guide](https://learn.hashicorp.com/tutorials/terraform/install-cli))
+- **AWS CLI** v2.0+ ([Install Guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html))
+- **Git** for version control
+- **GitHub** repository with Actions enabled
+
+### AWS Resources
+
+- **S3 bucket** for Terraform state storage
+- **DynamoDB table** for state locking
+- **IAM user/role** with appropriate permissions
+
+### Permissions Required
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "events:*",
+        "lambda:*",
+        "sns:*",
+        "iam:*",
+        "logs:*",
+        "resource-groups:*",
+        "s3:*",
+        "dynamodb:*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+## 🚀 Quick Start
+
+### 1. Clone Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/your-org/aws-health-notifications.git
 cd aws-health-notifications
 ```
 
-### 2. Initialize Environment
+### 2. Configure GitHub Secrets
+
+Navigate to your repository settings and add these secrets:
+
+| Secret Name             | Description         | Example              |
+| ----------------------- | ------------------- | -------------------- |
+| `AWS_ACCESS_KEY_ID`     | AWS Access Key      | `AKIA...`            |
+| `AWS_SECRET_ACCESS_KEY` | AWS Secret Key      | `xxxx...`            |
+| `TF_STATE_BUCKET`       | S3 bucket for state | `my-terraform-state` |
+| `TF_STATE_LOCK_TABLE`   | DynamoDB table      | `terraform-locks`    |
+
+### 3. Configure Environments
+
+Set up GitHub environments:
+
+- Navigate to **Settings** → **Environments**
+- Create `dev` and `prod` environments
+- Configure protection rules for `prod`
+
+### 4. Initialize Development Environment
 
 ```bash
-# Use the init script for automated setup
 ./init.sh dev
-
-# Or manually:
-cd environments/dev
-terraform init -backend-config=../../backend/dev.hcl
 ```
 
-### 3. Create tfvars File
-
-Copy the example and customize:
+### 5. Deploy
 
 ```bash
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars with your values
-```
-
-### 4. Deploy Locally
-
-```bash
-# Using the deploy script
+# Deploy to development
 ./deploy.sh dev
 
-# Or manually:
-terraform plan
-terraform apply
+# Or deploy via GitHub Actions
+git push origin main  # Auto-deploys to dev
 ```
 
-## CI/CD Pipeline
+## ⚙️ Configuration
 
-### Automated Deployments
+### Environment Variables
 
-- **Pull Requests**: Terraform plan only (for review)
-- **Push to main**: Automatic deployment to dev
-- **Manual trigger**: Select environment for deployment
+Create `terraform.tfvars` in each environment directory:
 
-### Deployment Flow
+```hcl
+# environments/dev/terraform.tfvars
+aws_region     = "us-east-1"
+environment    = "dev"
+owner_team     = "platform-team"
+cost_center    = "engineering"
 
-1. Create feature branch
-2. Make changes
-3. Create pull request
-4. Review Terraform plan
-5. Merge to main
-6. Automatic deployment (dev) or manual approval (prod)
-
-### Production Deployments
-
-Production requires manual approval through GitHub environments:
-
-1. Merge PR to main
-2. GitHub Actions runs Terraform plan
-3. Review and approve deployment in GitHub UI
-4. Terraform apply executes
-
-## Notification Format
-
-The notifications are formatted by a Lambda function for improved readability:
-
-### Email Notifications
-
-```
-=====================================================================
-            ⚠️  AWS HEALTH EVENT - DEV ENVIRONMENT  ⚠️
-=====================================================================
-
-📊  EVENT SUMMARY
-    -------------------------------------------------------------
-    • Service:    EC2
-    • Status:     OPEN
-    • Type:       AWS_EC2_OPERATIONAL_ISSUE
-    • Category:   issue
-
-🕒  TIMELINE
-    -------------------------------------------------------------
-    • Detected:   2025-05-11T12:00:00Z
-    • Started:    2025-05-11T11:45:00Z
-    • Ended:      2025-05-11T12:30:00Z
-
-📝  DESCRIPTION
-    -------------------------------------------------------------
-    We are experiencing elevated API error rates for EC2 instances
-    in the US-EAST-1 region. Our engineering team is investigating
-    the issue.
-
-🔍  EVENT DETAILS
-    -------------------------------------------------------------
-    • Event ARN:  arn:aws:health:us-east-1::event/EC2/...
-    • Region:     us-east-1
-    • Account:    123456789012
-
-=====================================================================
-                 AWS HEALTH EVENT MONITORING SYSTEM
-=====================================================================
+# Custom tags
+tags = {
+  CostCenter  = "platform-engineering"
+  Owner       = "devops-team"
+  Criticality = "high"
+}
 ```
 
-### SMS Notifications
+### SNS Subscriptions
 
-Concise format:
+Subscriptions are managed manually via AWS Console for flexibility:
 
-```
-⚠️ DEV ALERT: EC2 OPEN - AWS_EC2_OPERATIONAL_ISSUE
-```
+**Email Subscription:**
 
-## Managing Subscriptions
+1. Go to **SNS Console** → Topics
+2. Select `{environment}-health-event-notifications`
+3. **Create subscription**:
+   - Protocol: `Email`
+   - Endpoint: `your-email@company.com`
+4. Confirm via email
 
-SNS topic subscriptions are managed manually through the AWS Console, not through Terraform. This approach provides more flexibility and avoids issues with subscription confirmation and state management.
+**SMS Subscription:**
 
-### Adding Email Subscriptions
+1. **Create subscription**:
+   - Protocol: `SMS`
+   - Endpoint: `+1234567890` (E.164 format)
 
-1. Navigate to the AWS SNS Console
-2. Find the topic: `{environment}-health-event-notifications`
-3. Click "Create subscription"
-4. Choose:
-   - Protocol: Email
-   - Endpoint: Enter the email address
-5. Click "Create subscription"
-6. Check the email inbox and confirm the subscription
+## 🚢 Deployment
 
-### Adding SMS Subscriptions
+### Automated Deployment (Recommended)
 
-1. Navigate to the AWS SNS Console
-2. Find the topic: `{environment}-health-event-notifications`
-3. Click "Create subscription"
-4. Choose:
-   - Protocol: SMS
-   - Endpoint: Enter the phone number in E.164 format (e.g., +14155551234)
-5. Click "Create subscription"
-
-## Testing Notifications
-
-To test the notification system:
+**Development:**
 
 ```bash
-# Create a test script
-cat > test-health-event.sh << 'EOF'
-#!/bin/bash
-# Test script for AWS Health Event notifications
-
-ENVIRONMENT="${1:-dev}"
-REGION="${2:-us-east-1}"
-EVENT_ID=$(date +%s)
-
-# Find the Lambda function
-LAMBDA_NAME=$(aws lambda list-functions \
-  --query "Functions[?contains(FunctionName, '${ENVIRONMENT}-health-event-formatter')].FunctionName" \
-  --output text \
-  --region "${REGION}")
-
-# Create a test event
-cat > test-event.json << EOF2
-{
-  "source": "aws.health",
-  "detail-type": "AWS Health Event",
-  "time": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "region": "${REGION}",
-  "account": "$(aws sts get-caller-identity --query Account --output text)",
-  "detail": {
-    "eventArn": "arn:aws:health:${REGION}::event/EC2/AWS_EC2_OPERATIONAL_ISSUE/TEST_${EVENT_ID}",
-    "service": "EC2",
-    "eventTypeCode": "AWS_EC2_OPERATIONAL_ISSUE",
-    "eventTypeCategory": "issue",
-    "startTime": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-    "endTime": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-    "statusCode": "open",
-    "eventDescription": [
-      {
-        "language": "en_US",
-        "latestDescription": "TEST NOTIFICATION: This is a test AWS Health event to verify formatting. Test ID: ${EVENT_ID}"
-      }
-    ]
-  }
-}
-EOF2
-
-# Invoke the Lambda function
-aws lambda invoke \
-  --function-name "$LAMBDA_NAME" \
-  --payload file://test-event.json \
-  --cli-binary-format raw-in-base64-out \
-  --region "${REGION}" \
-  response.json
-
-echo "Test event sent! Check your email for the notification."
-rm test-event.json response.json
-EOF
-
-chmod +x test-health-event.sh
-./test-health-event.sh
+# Automatic on main branch push
+git push origin main
 ```
 
-## Best Practices
+**Production:**
 
-1. **Testing**: Always test changes in dev before prod
-2. **Reviews**: Require PR reviews for all changes
-3. **Monitoring**: Watch CloudWatch logs for event processing
-4. **Validation**: Verify SNS subscriptions after deployment
-5. **Documentation**: Keep tfvars.example updated
+```bash
+# Manual trigger with approval
+# Go to GitHub Actions → Run workflow → Select 'prod'
+```
 
-## Troubleshooting
+### Manual Deployment
+
+```bash
+# Initialize
+cd environments/dev
+terraform init -backend-config=../../backend/dev.hcl
+
+# Plan
+terraform plan -var-file="terraform.tfvars"
+
+# Apply
+terraform apply -var-file="terraform.tfvars"
+```
+
+### Deployment Pipeline
+
+```mermaid
+graph LR
+    A[Code Push] --> B[GitHub Actions]
+    B --> C[Terraform Plan]
+    C --> D{Environment}
+    D -->|dev| E[Auto Deploy]
+    D -->|prod| F[Manual Approval]
+    F --> G[Deploy to Prod]
+    E --> H[Notify Team]
+    G --> H
+```
+
+## 🧪 Testing
+
+### Test Health Event Notifications
+
+```bash
+# Test development environment
+./test-health-notification.sh dev
+
+# Test production environment
+./test-health-notification.sh prod
+```
+
+### Test Lambda Function
+
+```bash
+# Test message formatting
+./test-lambda-formatter.sh
+```
+
+### Manual Testing
+
+```bash
+# Create test event
+aws events put-events \
+  --entries '[{
+    "Source": "aws.health",
+    "DetailType": "AWS Health Event",
+    "Detail": "{\"service\":\"EC2\",\"statusCode\":\"open\"}"
+  }]'
+```
+
+## 📊 Monitoring
+
+### CloudWatch Dashboards
+
+Access pre-built dashboards:
+
+- **Lambda Performance**: Function duration, errors, invocations
+- **SNS Metrics**: Delivery success/failure rates
+- **EventBridge**: Rule matches and failures
+
+### Key Metrics to Monitor
+
+- Lambda function errors and duration
+- SNS delivery success rate
+- EventBridge rule matches
+- DLQ message count (if implemented)
+
+### Alerting
+
+Set up CloudWatch alarms for:
+
+- Lambda function failures > 5%
+- SNS delivery failures > 10%
+- EventBridge processing delays > 5 minutes
+
+## 🔍 Troubleshooting
 
 ### Common Issues
 
-1. **Failed Terraform Init**
+| Issue                         | Symptoms                 | Solution                                               |
+| ----------------------------- | ------------------------ | ------------------------------------------------------ |
+| **No notifications received** | Events not triggering    | Check EventBridge rule, Lambda logs, SNS subscriptions |
+| **Lambda timeout**            | Function exceeding 30s   | Check CloudWatch logs, optimize code                   |
+| **Permission errors**         | Access denied messages   | Verify IAM roles and policies                          |
+| **State lock errors**         | Terraform lock conflicts | Check DynamoDB table, release locks                    |
 
-   - Check S3 bucket permissions
-   - Verify DynamoDB table exists
-   - Confirm AWS credentials
+### Debug Commands
 
-2. **Subscription Confirmation**
+```bash
+# Check Lambda logs
+aws logs describe-log-groups --log-group-name-prefix "/aws/lambda/"
 
-   - Check spam folders for confirmation emails
-   - Verify phone numbers are in E.164 format
+# Test SNS topic
+aws sns publish --topic-arn "arn:aws:sns:region:account:topic" --message "test"
 
-3. **No Notifications Received**
+# Validate EventBridge rule
+aws events describe-rule --name "dev-health-event-notifications"
+```
 
-   - Confirm EventBridge rule is active
-   - Check SNS topic permissions
-   - Review CloudWatch logs for Lambda function
-   - Verify subscription status in SNS
+### Log Analysis
 
-4. **Lambda Errors**
-   - Check CloudWatch Logs under `/aws/lambda/{environment}-health-event-formatter`
-   - Verify Lambda role permissions
-   - Check if the Lambda function has access to SNS
+```bash
+# Stream Lambda logs
+aws logs tail /aws/lambda/dev-health-event-formatter --follow
 
-## Support
+# Search for errors
+aws logs filter-log-events \
+  --log-group-name "/aws/lambda/dev-health-event-formatter" \
+  --filter-pattern "ERROR"
+```
 
-- Check GitHub Actions logs for deployment issues
-- Review AWS CloudWatch for event processing logs
-- Contact the platform team for assistance
+## 🤝 Contributing
 
-## License
+### Development Workflow
 
-MIT License
+1. **Fork** the repository
+2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
+3. **Make** changes and test thoroughly
+4. **Commit** with conventional commits: `git commit -m 'feat: add amazing feature'`
+5. **Push** to branch: `git push origin feature/amazing-feature`
+6. **Create** a Pull Request
 
-## Contributing
+### Code Standards
 
-1. Fork the repository
-2. Create a feature branch
-3. Make changes and test thoroughly
-4. Submit a pull request
-5. Wait for review and approval
+- Follow [Terraform best practices](https://www.terraform-best-practices.com/)
+- Use consistent naming conventions
+- Add comments for complex logic
+- Update documentation for changes
+- Test in `dev` before `prod`
 
-## Changelog
+### Commit Message Format
 
-See [deployment.md](deployment.md) for detailed deployment procedures.
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
+```
+
+**Types:** `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+
+## 🛡️ Security
+
+### Security Best Practices
+
+- **Least Privilege**: IAM roles follow minimum required permissions
+- **Encryption**: SNS topics support encryption at rest
+- **State Security**: Terraform state encrypted in S3
+- **Access Control**: GitHub environments protect production
+- **Audit Trail**: All changes tracked via Git and CloudTrail
+
+### Security Checklist
+
+- [ ] IAM roles follow least privilege
+- [ ] SNS topics encrypted
+- [ ] S3 bucket encryption enabled
+- [ ] GitHub secrets properly configured
+- [ ] CloudTrail logging enabled
+- [ ] Regular security reviews
+
+### Vulnerability Reporting
+
+Report security vulnerabilities to: [security@company.com](mailto:security@company.com)
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 📞 Support
+
+### Getting Help
+
+- **Documentation**: Check this README and [deployment.md](deployment.md)
+- **Issues**: [GitHub Issues](https://github.com/your-org/aws-health-notifications/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/aws-health-notifications/discussions)
+- **Internal**: Contact the Platform Team on Slack
+
+### Maintenance Schedule
+
+- **Regular Updates**: Monthly dependency updates
+- **Security Patches**: As needed
+- **Feature Releases**: Quarterly
+
+---
+
+## 📈 Roadmap
+
+- [ ] **Enhanced Monitoring**: CloudWatch dashboards and alarms
+- [ ] **Multi-Region Support**: Cross-region deployment capability
+- [ ] **Slack Integration**: Slack webhook notifications
+- [ ] **Custom Filters**: Advanced event filtering options
+- [ ] **Cost Optimization**: Lambda provisioned concurrency options
+- [ ] **Testing Framework**: Automated integration tests
+
+---
+
+**Made with ❤️ by the Platform Team**
+
+_For more information, visit our [internal documentation](https://docs.company.com/aws-health-notifications)_
