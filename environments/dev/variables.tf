@@ -10,21 +10,6 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
-variable "terraform_state_bucket" {
-  description = "S3 bucket for storing terraform state"
-  type        = string
-}
-
-variable "terraform_state_key" {
-  description = "S3 key for terraform state"
-  type        = string
-}
-
-variable "terraform_state_dynamodb_table" {
-  description = "DynamoDB table for terraform state locking"
-  type        = string
-}
-
 variable "github_org" {
   description = "GitHub organization name for the repository"
   type        = string

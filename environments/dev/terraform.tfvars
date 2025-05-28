@@ -1,4 +1,4 @@
-# Simplified configuration - backend managed via backend.hcl
+# Development environment configuration
 aws_region  = "us-east-1"
 environment = "dev"
 github_org  = "xman"
