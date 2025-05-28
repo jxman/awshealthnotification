@@ -31,6 +31,7 @@
 - [Testing](#-testing)
 - [Monitoring](#-monitoring)
 - [Troubleshooting](#-troubleshooting)
+- [Maintenance](#-maintenance)
 - [Contributing](#-contributing)
 - [Security](#-security)
 - [License](#-license)
@@ -44,14 +45,15 @@ This project automates AWS Health Event notifications using Terraform and GitHub
 - 🔔 **Real-time AWS Health Event notifications**
 - 📧 **Enhanced email formatting** with emojis and visual structure
 - 📱 **SMS support** for critical alerts
-- 🌍 **Multi-environment support** (dev/prod/staging)
+- 🌍 **Multi-environment support** (dev/prod)
 - 🔄 **Automated CI/CD deployments** via GitHub Actions
-- 🔒 **Secure state management** with S3 and DynamoDB
+- 🔒 **Secure state management** with S3 backend
 - 📝 **Custom message formatting** with Lambda function
 - 🏗️ **Modular Terraform architecture**
 - 🏷️ **Comprehensive resource tagging**
 - 📊 **Resource grouping** for better organization
 - 🛡️ **IAM least privilege** security model
+- 🧹 **Clean project structure** with automated cleanup tools
 
 ## 🏗️ Architecture
 
@@ -67,7 +69,6 @@ graph TB
     H --> I[Multi-Environment Deployment]
 
     J[S3 Backend] --> K[State Management]
-    L[DynamoDB] --> K
 
     subgraph "Environments"
         M[Development]
@@ -89,45 +90,52 @@ graph TB
 ## 📁 Project Structure
 
 ```
-├── 📁 .github/
-│   └── 📁 workflows/
-│       └── 📄 terraform.yml          # CI/CD pipeline
-├── 📁 backend/                       # Backend configurations
-│   ├── 📄 dev.hcl
-│   └── 📄 prod.hcl
-├── 📁 environments/                  # Environment-specific configs
-│   ├── 📁 dev/
-│   │   ├── 📄 main.tf
-│   │   ├── 📄 variables.tf
-│   │   ├── 📄 outputs.tf
-│   │   └── 📄 terraform.tfvars.example
-│   └── 📁 prod/
-│       ├── 📄 main.tf
-│       ├── 📄 variables.tf
-│       ├── 📄 outputs.tf
-│       └── 📄 terraform.tfvars.example
-├── 📁 modules/                       # Reusable Terraform modules
-│   ├── 📁 eventbridge/              # Event processing & Lambda
-│   │   ├── 📁 lambda/
-│   │   │   └── 📄 index.js          # Notification formatter
-│   │   ├── 📄 main.tf
-│   │   ├── 📄 variables.tf
-│   │   └── 📄 outputs.tf
-│   ├── 📁 sns/                      # Notification management
-│   │   ├── 📄 main.tf
-│   │   ├── 📄 variables.tf
-│   │   └── 📄 outputs.tf
-│   └── 📁 resource_groups/          # Resource organization
-│       ├── 📄 main.tf
-│       ├── 📄 variables.tf
-│       └── 📄 outputs.tf
-├── 📄 README.md
-├── 📄 TAGGING_STRATEGY.md           # Tagging guidelines
-├── 📄 deployment.md                 # Deployment procedures
-├── 📄 .gitignore
-├── 📄 init.sh                       # Environment initialization
-├── 📄 deploy.sh                     # Deployment helper
-└── 📄 test-*.sh                     # Testing scripts
+📦 aws-health-notifications/
+├── 🔧 .github/
+│   └── workflows/
+│       └── terraform.yml          # CI/CD pipeline configuration
+├── 📋 backend/                    # Terraform backend configurations
+│   ├── dev.hcl                   # Development backend config
+│   └── prod.hcl                  # Production backend config
+├── 🌍 environments/               # Environment-specific configurations
+│   ├── dev/                      # Development environment
+│   │   ├── main.tf               # Main Terraform configuration
+│   │   ├── variables.tf          # Variable definitions
+│   │   ├── outputs.tf            # Output definitions
+│   │   ├── terraform.tfvars      # Environment-specific values
+│   │   └── terraform.tfvars.example
+│   └── prod/                     # Production environment
+│       ├── main.tf               # Main Terraform configuration
+│       ├── variables.tf          # Variable definitions
+│       ├── outputs.tf            # Output definitions
+│       ├── terraform.tfvars      # Environment-specific values
+│       └── terraform.tfvars.example
+├── 🧩 modules/                    # Reusable Terraform modules
+│   ├── eventbridge/              # EventBridge & Lambda module
+│   │   ├── lambda/
+│   │   │   └── index.js          # Lambda notification formatter
+│   │   ├── main.tf               # EventBridge resources
+│   │   ├── variables.tf          # Module variables
+│   │   └── outputs.tf            # Module outputs
+│   ├── sns/                      # SNS notification module
+│   │   ├── main.tf               # SNS topic & policies
+│   │   ├── variables.tf          # Module variables
+│   │   └── outputs.tf            # Module outputs
+│   └── resource_groups/          # Resource organization module
+│       ├── main.tf               # Resource group definitions
+│       ├── variables.tf          # Module variables
+│       └── outputs.tf            # Module outputs
+├── 🚀 Scripts & Tools
+│   ├── deploy.sh                 # Deployment helper script
+│   ├── init.sh                   # Environment initialization
+│   ├── cleanup-project.sh        # 🧹 Project cleanup utility
+│   ├── test-health-notification.sh  # Health notification testing
+│   └── test-lambda-formatter.sh     # Lambda function testing
+├── 📚 Documentation
+│   ├── README.md                 # This file
+│   ├── TAGGING_STRATEGY.md       # Resource tagging guidelines
+│   ├── deployment.md             # Deployment procedures
+│   └── .gitignore                # Git ignore rules
 ```
 
 ## 📋 Prerequisites
@@ -143,7 +151,6 @@ graph TB
 ### AWS Resources
 
 - **S3 bucket** for Terraform state storage
-- **DynamoDB table** for state locking
 - **IAM user/role** with appropriate permissions
 
 ### Permissions Required
@@ -161,8 +168,8 @@ graph TB
         "iam:*",
         "logs:*",
         "resource-groups:*",
-        "s3:*",
-        "dynamodb:*"
+        "s3:GetObject",
+        "s3:PutObject"
       ],
       "Resource": "*"
     }
@@ -188,7 +195,6 @@ Navigate to your repository settings and add these secrets:
 | `AWS_ACCESS_KEY_ID`     | AWS Access Key      | `AKIA...`            |
 | `AWS_SECRET_ACCESS_KEY` | AWS Secret Key      | `xxxx...`            |
 | `TF_STATE_BUCKET`       | S3 bucket for state | `my-terraform-state` |
-| `TF_STATE_LOCK_TABLE`   | DynamoDB table      | `terraform-locks`    |
 
 ### 3. Configure Environments
 
@@ -201,6 +207,10 @@ Set up GitHub environments:
 ### 4. Initialize Development Environment
 
 ```bash
+# Make scripts executable
+chmod +x *.sh
+
+# Initialize development environment
 ./init.sh dev
 ```
 
@@ -226,6 +236,10 @@ aws_region     = "us-east-1"
 environment    = "dev"
 owner_team     = "platform-team"
 cost_center    = "engineering"
+
+# GitHub repository information
+github_org     = "your-org"
+github_repo    = "aws-health-notifications"
 
 # Custom tags
 tags = {
@@ -286,20 +300,6 @@ terraform plan -var-file="terraform.tfvars"
 terraform apply -var-file="terraform.tfvars"
 ```
 
-### Deployment Pipeline
-
-```mermaid
-graph LR
-    A[Code Push] --> B[GitHub Actions]
-    B --> C[Terraform Plan]
-    C --> D{Environment}
-    D -->|dev| E[Auto Deploy]
-    D -->|prod| F[Manual Approval]
-    F --> G[Deploy to Prod]
-    E --> H[Notify Team]
-    G --> H
-```
-
 ## 🧪 Testing
 
 ### Test Health Event Notifications
@@ -308,7 +308,7 @@ graph LR
 # Test development environment
 ./test-health-notification.sh dev
 
-# Test production environment
+# Test production environment  
 ./test-health-notification.sh prod
 ```
 
@@ -326,7 +326,7 @@ graph LR
 aws events put-events \
   --entries '[{
     "Source": "aws.health",
-    "DetailType": "AWS Health Event",
+    "DetailType": "AWS Health Event", 
     "Detail": "{\"service\":\"EC2\",\"statusCode\":\"open\"}"
   }]'
 ```
@@ -335,7 +335,7 @@ aws events put-events \
 
 ### CloudWatch Dashboards
 
-Access pre-built dashboards:
+Access pre-built dashboards for:
 
 - **Lambda Performance**: Function duration, errors, invocations
 - **SNS Metrics**: Delivery success/failure rates
@@ -346,7 +346,7 @@ Access pre-built dashboards:
 - Lambda function errors and duration
 - SNS delivery success rate
 - EventBridge rule matches
-- DLQ message count (if implemented)
+- Overall notification delivery rate
 
 ### Alerting
 
@@ -355,6 +355,40 @@ Set up CloudWatch alarms for:
 - Lambda function failures > 5%
 - SNS delivery failures > 10%
 - EventBridge processing delays > 5 minutes
+
+## 🔧 Maintenance
+
+### Project Cleanup
+
+Use the built-in cleanup utility to remove generated files:
+
+```bash
+# Run the cleanup script
+./cleanup-project.sh
+```
+
+This will safely remove:
+- Generated Terraform files (`.terraform/` directories)
+- Old state backup files
+- Temporary log files
+- Obsolete scripts
+
+### Regular Maintenance Tasks
+
+- **Monthly**: Review and update dependencies
+- **Quarterly**: Security assessment and updates
+- **As needed**: Clean up old backup files and logs
+
+### Terraform State Management
+
+```bash
+# Reinitialize Terraform if needed
+cd environments/dev
+terraform init -backend-config=../../backend/dev.hcl -reconfigure
+
+# Check state health
+terraform plan -var-file="terraform.tfvars"
+```
 
 ## 🔍 Troubleshooting
 
@@ -365,7 +399,7 @@ Set up CloudWatch alarms for:
 | **No notifications received** | Events not triggering    | Check EventBridge rule, Lambda logs, SNS subscriptions |
 | **Lambda timeout**            | Function exceeding 30s   | Check CloudWatch logs, optimize code                   |
 | **Permission errors**         | Access denied messages   | Verify IAM roles and policies                          |
-| **State lock errors**         | Terraform lock conflicts | Check DynamoDB table, release locks                    |
+| **State lock errors**         | Terraform lock conflicts | Check S3 backend configuration                         |
 
 ### Debug Commands
 
@@ -399,9 +433,10 @@ aws logs filter-log-events \
 1. **Fork** the repository
 2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
 3. **Make** changes and test thoroughly
-4. **Commit** with conventional commits: `git commit -m 'feat: add amazing feature'`
-5. **Push** to branch: `git push origin feature/amazing-feature`
-6. **Create** a Pull Request
+4. **Run** cleanup: `./cleanup-project.sh` (if needed)
+5. **Commit** with conventional commits: `git commit -m 'feat: add amazing feature'`
+6. **Push** to branch: `git push origin feature/amazing-feature`
+7. **Create** a Pull Request
 
 ### Code Standards
 
@@ -410,6 +445,7 @@ aws logs filter-log-events \
 - Add comments for complex logic
 - Update documentation for changes
 - Test in `dev` before `prod`
+- Keep the project structure clean
 
 ### Commit Message Format
 
@@ -429,7 +465,7 @@ aws logs filter-log-events \
 
 - **Least Privilege**: IAM roles follow minimum required permissions
 - **Encryption**: SNS topics support encryption at rest
-- **State Security**: Terraform state encrypted in S3
+- **State Security**: Terraform state stored securely in S3
 - **Access Control**: GitHub environments protect production
 - **Audit Trail**: All changes tracked via Git and CloudTrail
 
@@ -464,17 +500,19 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Regular Updates**: Monthly dependency updates
 - **Security Patches**: As needed
 - **Feature Releases**: Quarterly
+- **Cleanup**: Use `./cleanup-project.sh` as needed
 
 ---
 
 ## 📈 Roadmap
 
-- [ ] **Enhanced Monitoring**: CloudWatch dashboards and alarms
+- [ ] **Enhanced Monitoring**: Advanced CloudWatch dashboards
 - [ ] **Multi-Region Support**: Cross-region deployment capability
 - [ ] **Slack Integration**: Slack webhook notifications
 - [ ] **Custom Filters**: Advanced event filtering options
 - [ ] **Cost Optimization**: Lambda provisioned concurrency options
 - [ ] **Testing Framework**: Automated integration tests
+- [ ] **Terraform Modules**: Publish reusable modules
 
 ---
 
