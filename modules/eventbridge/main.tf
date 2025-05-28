@@ -51,6 +51,7 @@ resource "aws_lambda_function" "health_formatter" {
     variables = {
       ENVIRONMENT   = upper(var.environment)
       SNS_TOPIC_ARN = var.sns_topic_arn
+      AWS_REGION    = data.aws_region.current.name
     }
   }
 
@@ -144,3 +145,6 @@ resource "aws_lambda_permission" "allow_eventbridge" {
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.health_events.arn
 }
+
+# Data source for current AWS region
+data "aws_region" "current" {}
