@@ -2,8 +2,8 @@
 // Updated for nodejs20.x with AWS SDK v3
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 
-// Initialize SNS client
-const snsClient = new SNSClient({ region: process.env.AWS_REGION || 'us-east-1' });
+// Initialize SNS client - AWS Lambda automatically provides region
+const snsClient = new SNSClient({});
 
 exports.handler = async (event, context) => {
   console.log('Event received:', JSON.stringify(event, null, 2));

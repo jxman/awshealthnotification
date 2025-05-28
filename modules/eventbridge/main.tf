@@ -51,7 +51,6 @@ resource "aws_lambda_function" "health_formatter" {
     variables = {
       ENVIRONMENT   = upper(var.environment)
       SNS_TOPIC_ARN = var.sns_topic_arn
-      AWS_REGION    = data.aws_region.current.name
     }
   }
 
