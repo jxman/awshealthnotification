@@ -1,4 +1,4 @@
-# S3 backend with native locking (use_lockfile = true)
+# Production environment configuration
 aws_region  = "us-east-1"
 environment = "prod"
 github_org  = "xman"
@@ -13,7 +13,7 @@ tags = {
   Owner       = "platform-team"
   Project     = "health-monitoring"
   Application = "aws-health-notifications"
-  Criticality = "medium"
-  Backup      = "false"
+  Criticality = "high"
+  Backup      = "true"
   Compliance  = "none"
 }

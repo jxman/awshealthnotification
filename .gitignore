@@ -17,6 +17,8 @@ crash.*.log
 *.tfvars.json
 !terraform.tfvars.example
 
+# Include basic tfvars for this specific project (they contain no secrets)
+!environments/*/terraform.tfvars
 
 # Ignore CLI configuration files
 .terraformrc
@@ -50,4 +52,9 @@ Thumbs.db
 
 # Generated Lambda ZIP files
 modules/*/lambda_function*.zip
+
+# Backup files
+*.bak
+*.backup
+*~
 

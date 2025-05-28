@@ -1,4 +1,4 @@
-# Simplified configuration - backend managed via backend.hcl
+# S3 backend with native locking (use_lockfile = true)
 aws_region  = "us-east-1"
 environment = "dev"
 github_org  = "xman"

@@ -44,31 +44,28 @@ jobs:
       - name: Setup Terraform Files
         working-directory: environments/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
         run: |
-          # Create backend config
+          # Create S3 backend config with native locking (use_lockfile = true)
           cat > ../../backend.hcl << EOF
-          bucket         = "${{ secrets.TF_STATE_BUCKET }}"
-          key            = "health-notifications/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}/terraform.tfstate"
-          region         = "${{ env.AWS_REGION }}"
-          dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
-          encrypt        = true
+          bucket       = "${{ secrets.TF_STATE_BUCKET }}"
+          key          = "health-notifications/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}/terraform.tfstate"
+          region       = "${{ env.AWS_REGION }}"
+          encrypt      = true
+          use_lockfile = true
           EOF
 
           # Get the project path from GitHub workspace
           PROJECT_PATH="${GITHUB_REPOSITORY#*/}"
 
-          # Create tfvars without subscription variables
+          # Create tfvars with only needed variables
           cat > terraform.tfvars << EOF
-          aws_region                     = "${{ env.AWS_REGION }}"
-          environment                    = "${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}"
-          terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
-          terraform_state_key            = "health-notifications/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}/terraform.tfstate"
-          terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
+          aws_region  = "${{ env.AWS_REGION }}"
+          environment = "${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}"
           tags = {
             Environment = "${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}"
             Service     = "aws-health-notifications"
             ManagedBy   = "terraform"
             Owner       = "platform-team"
-            GithubRepo = "${PROJECT_PATH}"
+            GithubRepo  = "${PROJECT_PATH}"
           }
           EOF
 
@@ -113,30 +110,28 @@ jobs:
       - name: Setup Terraform Files
         working-directory: environments/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
         run: |
+          # Create S3 backend config with native locking (use_lockfile = true)
           cat > ../../backend.hcl << EOF
-          bucket         = "${{ secrets.TF_STATE_BUCKET }}"
-          key            = "health-notifications/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}/terraform.tfstate"
-          region         = "${{ env.AWS_REGION }}"
-          dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
-          encrypt        = true
+          bucket       = "${{ secrets.TF_STATE_BUCKET }}"
+          key          = "health-notifications/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}/terraform.tfstate"
+          region       = "${{ env.AWS_REGION }}"
+          encrypt      = true
+          use_lockfile = true
           EOF
 
           # Get the project path from GitHub workspace
           PROJECT_PATH="${GITHUB_REPOSITORY#*/}"
 
-          # Create tfvars without subscription variables
+          # Create tfvars with only needed variables
           cat > terraform.tfvars << EOF
-          aws_region                     = "${{ env.AWS_REGION }}"
-          environment                    = "${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}"
-          terraform_state_bucket         = "${{ secrets.TF_STATE_BUCKET }}"
-          terraform_state_key            = "health-notifications/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}/terraform.tfstate"
-          terraform_state_dynamodb_table = "${{ secrets.TF_STATE_LOCK_TABLE }}"
+          aws_region  = "${{ env.AWS_REGION }}"
+          environment = "${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}"
           tags = {
             Environment = "${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}"
             Service     = "aws-health-notifications"
             ManagedBy   = "terraform"
             Owner       = "platform-team"
-            GithubRepo = "${PROJECT_PATH}"
+            GithubRepo  = "${PROJECT_PATH}"
           }
           EOF
 
