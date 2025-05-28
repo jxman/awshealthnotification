@@ -39,7 +39,7 @@ resource "aws_lambda_function" "health_formatter" {
   function_name = "${var.environment}-health-event-formatter"
   role          = aws_iam_role.lambda_role.arn
   handler       = "index.handler"
-  runtime       = "nodejs16.x"
+  runtime       = "nodejs20.x"
   timeout       = 30
   memory_size   = 128
 
