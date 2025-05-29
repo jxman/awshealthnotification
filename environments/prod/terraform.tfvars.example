@@ -1,11 +1,20 @@
-# S3 backend with native locking (use_lockfile = true)
-aws_region  = "us-east-1"
-environment = "prod"
-github_org  = "xman"
-github_repo = "aws-health-notifications"
-owner_team  = "platform-team"
-cost_center = "platform-engineering"
+# Production Environment Configuration
+# Copy this file to terraform.tfvars and customize the values
 
+# AWS Configuration
+aws_region  = "us-east-1"        # AWS region for resources
+environment = "prod"             # Environment name (dev/prod)
+
+# GitHub Repository Information (for tagging and documentation)
+github_org  = "your-org"         # Replace with your GitHub organization
+github_repo = "aws-health-notifications"  # Repository name
+
+# Team and Cost Information
+owner_team  = "platform-team"    # Team responsible for these resources
+cost_center = "platform-engineering"      # Cost center for billing
+
+# Resource Tags
+# These tags will be applied to all resources for organization and billing
 tags = {
   Environment = "prod"
   Service     = "aws-health-notifications"
@@ -13,7 +22,7 @@ tags = {
   Owner       = "platform-team"
   Project     = "health-monitoring"
   Application = "aws-health-notifications"
-  Criticality = "medium"
-  Backup      = "false"
-  Compliance  = "none"
+  Criticality = "high"            # Production is high criticality
+  Backup      = "true"            # Production needs backups
+  Compliance  = "none"            # Update if compliance requirements exist
 }

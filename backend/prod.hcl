@@ -1,4 +1,5 @@
-# S3 backend with native locking (use_lockfile = true)
+# S3 backend configuration for production environment
+# This matches the GitHub Actions workflow configuration pattern
 bucket       = "jxman-terraform-state-bucket"
 key          = "health-notifications/prod/terraform.tfstate"
 region       = "us-east-1"

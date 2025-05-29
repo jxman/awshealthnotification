@@ -27,7 +27,6 @@ terraform.rc
 # Ignore backend configuration as it's generated dynamically
 backend.hcl
 
-
 # Ignore lock file as it should be generated locally
 .terraform.lock.hcl
 
@@ -58,3 +57,10 @@ modules/*/lambda_function*.zip
 *.backup
 *~
 
+# Deployment and application logs
+logs/
+*.log
+deployment-*.log
+
+# Terraform plan files
+*.tfplan

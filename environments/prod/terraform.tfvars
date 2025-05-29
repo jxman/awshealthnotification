@@ -13,7 +13,7 @@ tags = {
   Owner       = "platform-team"
   Project     = "health-monitoring"
   Application = "aws-health-notifications"
-  Criticality = "high"
-  Backup      = "true"
+  Criticality = "high"          # Production should be high criticality
+  Backup      = "true"          # Production should have backups enabled
   Compliance  = "none"
 }
