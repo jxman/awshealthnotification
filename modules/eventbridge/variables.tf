@@ -13,3 +13,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "enabled" {
+  description = "Enable or disable EventBridge rule"
+  type        = bool
+  default     = true
+}

@@ -53,6 +53,7 @@ module "eventbridge" {
 
   environment   = var.environment
   sns_topic_arn = module.sns.topic_arn
+  enabled       = true # Keep prod EventBridge enabled for production alerts
   tags          = local.resource_tags
 }
 

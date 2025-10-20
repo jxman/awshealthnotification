@@ -14,7 +14,7 @@ resource "aws_resourcegroups_group" "health_notifications" {
           Values = ["aws-health-notifications"]
         },
         {
-          Key    = "ManagedBy" 
+          Key    = "ManagedBy"
           Values = ["terraform"]
         }
       ]

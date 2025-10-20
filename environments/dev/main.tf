@@ -54,6 +54,7 @@ module "eventbridge" {
 
   environment   = var.environment
   sns_topic_arn = module.sns.topic_arn
+  enabled       = false # Disable dev EventBridge - only enable when testing
   tags          = local.resource_tags
 }
 
