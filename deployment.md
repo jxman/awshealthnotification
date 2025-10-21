@@ -14,12 +14,27 @@ This guide explains how to deploy changes to development and production environm
 ```
 environments/
 ├── dev/
-│   ├── main.tf
-│   └── variables.tf
+│   ├── main.tf              # EventBridge enabled = false (disabled by default)
+│   ├── variables.tf
+│   └── terraform.tfvars
 └── prod/
-    ├── main.tf
-    └── variables.tf
+    ├── main.tf              # EventBridge enabled = true (always active)
+    ├── variables.tf
+    └── terraform.tfvars
 ```
+
+## Environment-Specific Notification Control
+
+Each environment can independently control AWS Health notifications:
+
+- **Development**: EventBridge disabled by default to prevent duplicate alerts
+- **Production**: EventBridge always enabled for critical monitoring
+
+To enable dev notifications temporarily (e.g., for testing):
+1. Edit `environments/dev/main.tf`
+2. Change `enabled = false` to `enabled = true` in the eventbridge module
+3. Deploy via GitHub Actions or locally
+4. Remember to disable again after testing
 
 ## Deployment Process
 
@@ -174,6 +189,12 @@ git push origin --delete feature/prod-update
    - Check S3 bucket access
    - Verify DynamoDB table
    - Review state file locks
+
+4. No Notifications Received:
+   - Verify EventBridge rule state (ENABLED vs DISABLED)
+   - Check if environment has `enabled = false` in eventbridge module
+   - Review Lambda function logs for errors
+   - Confirm SNS subscriptions are active
 
 ## Rolling Back Changes
 

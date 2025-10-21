@@ -54,6 +54,7 @@ This project automates AWS Health Event notifications using Terraform and GitHub
 - 📊 **Resource grouping** for better organization
 - 🛡️ **IAM least privilege** security model
 - 🧹 **Clean project structure** with automated cleanup tools
+- ⚡ **Environment-specific notification control** - Enable/disable alerts per environment
 
 ## 🏗️ Architecture
 
@@ -249,6 +250,32 @@ tags = {
 }
 ```
 
+### EventBridge Notification Control
+
+Each environment can independently enable or disable AWS Health notifications. This is useful for:
+- Disabling dev environment alerts during normal operations
+- Enabling dev only when testing notification workflows
+- Keeping production alerts always active
+
+**Configuration:**
+
+In `environments/dev/main.tf`:
+```hcl
+module "eventbridge" {
+  source = "../../modules/eventbridge"
+
+  environment   = var.environment
+  sns_topic_arn = module.sns.topic_arn
+  enabled       = false  # Disable dev notifications (default: true)
+  tags          = local.resource_tags
+}
+```
+
+**Usage:**
+- Set `enabled = false` to disable EventBridge rule (no notifications sent)
+- Set `enabled = true` to enable EventBridge rule (notifications active)
+- Default value is `true` if not specified
+
 ### SNS Subscriptions
 
 Subscriptions are managed manually via AWS Console for flexibility:
@@ -396,7 +423,8 @@ terraform plan -var-file="terraform.tfvars"
 
 | Issue                         | Symptoms                 | Solution                                               |
 | ----------------------------- | ------------------------ | ------------------------------------------------------ |
-| **No notifications received** | Events not triggering    | Check EventBridge rule, Lambda logs, SNS subscriptions |
+| **No notifications received** | Events not triggering    | Check EventBridge rule state, Lambda logs, SNS subscriptions |
+| **EventBridge rule disabled** | No events being captured | Verify `enabled` parameter in environment module config |
 | **Lambda timeout**            | Function exceeding 30s   | Check CloudWatch logs, optimize code                   |
 | **Permission errors**         | Access denied messages   | Verify IAM roles and policies                          |
 | **State lock errors**         | Terraform lock conflicts | Check S3 backend configuration                         |
@@ -410,8 +438,13 @@ aws logs describe-log-groups --log-group-name-prefix "/aws/lambda/"
 # Test SNS topic
 aws sns publish --topic-arn "arn:aws:sns:region:account:topic" --message "test"
 
-# Validate EventBridge rule
-aws events describe-rule --name "dev-health-event-notifications"
+# Check EventBridge rule state
+aws events describe-rule --name "dev-health-event-notifications" \
+  --region us-east-1 \
+  --query '{Name:Name, State:State, Description:Description}'
+
+# Verify EventBridge rule is enabled/disabled as expected
+# State should be "ENABLED" or "DISABLED" based on your configuration
 ```
 
 ### Log Analysis
