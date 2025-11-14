@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; fill: #232F3E; }
+      .service-label { font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; fill: #232F3E; }
+      .description { font-family: Arial, sans-serif; font-size: 11px; fill: #666; }
+      .flow-text { font-family: Arial, sans-serif; font-size: 11px; fill: #232F3E; font-weight: bold; }
+      .aws-orange { fill: #FF9900; }
+      .aws-blue { fill: #232F3E; }
+      .service-box { fill: #FFFFFF; stroke: #E5E5E5; stroke-width: 2; }
+      .arrow { stroke: #FF9900; stroke-width: 3; fill: none; marker-end: url(#arrowhead); }
+      .data-flow { stroke: #E74C3C; stroke-width: 3; fill: none; marker-end: url(#arrowhead-red); }
+    </style>
+    <marker id="arrowhead" markerWidth="12" markerHeight="10" 
+     refX="10" refY="5" orient="auto">
+      <polygon points="0 0, 12 5, 0 10" fill="#FF9900" />
+    </marker>
+    <marker id="arrowhead-red" markerWidth="12" markerHeight="10" 
+     refX="10" refY="5" orient="auto">
+      <polygon points="0 0, 12 5, 0 10" fill="#E74C3C" />
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="800" fill="#FAFAFA"/>
+  
+  <!-- Title -->
+  <text x="600" y="40" text-anchor="middle" class="title">AWS Health Notifications Architecture</text>
+  
+  <!-- AWS Health Events -->
+  <g transform="translate(80, 120)">
+    <rect x="0" y="0" width="140" height="100" class="service-box" rx="8"/>
+    <!-- AWS Health Icon -->
+    <circle cx="70" cy="30" r="15" fill="#FF9900"/>
+    <text x="70" y="35" text-anchor="middle" style="font-size: 12px; fill: white; font-weight: bold;">H</text>
+    <text x="70" y="60" text-anchor="middle" class="service-label">AWS Health</text>
+    <text x="70" y="75" text-anchor="middle" class="description">Service Events</text>
+    <text x="70" y="90" text-anchor="middle" class="description">Source</text>
+  </g>
+  
+  <!-- EventBridge -->
+  <g transform="translate(300, 200)">
+    <rect x="0" y="0" width="180" height="140" class="service-box" rx="8"/>
+    <!-- EventBridge Icon -->
+    <rect x="15" y="15" width="40" height="30" fill="#FF9900" rx="4"/>
+    <rect x="20" y="20" width="10" height="20" fill="white"/>
+    <rect x="35" y="20" width="10" height="20" fill="white"/>
+    <circle cx="75" cy="30" r="8" fill="#232F3E"/>
+    <line x1="55" y1="30" x2="67" y2="30" stroke="#232F3E" stroke-width="2"/>
+    <line x1="83" y1="30" x2="150" y2="30" stroke="#232F3E" stroke-width="2"/>
+    <text x="90" y="65" text-anchor="middle" class="service-label">Amazon EventBridge</text>
+    <text x="90" y="85" text-anchor="middle" class="description">Event Rule: health-events</text>
+    <text x="90" y="100" text-anchor="middle" class="description">Pattern: aws.health</text>
+    <text x="90" y="115" text-anchor="middle" class="description">AWS Health Event</text>
+  </g>
+  
+  <!-- Lambda Function -->
+  <g transform="translate(580, 350)">
+    <rect x="0" y="0" width="200" height="160" class="service-box" rx="8"/>
+    <!-- Lambda Icon -->
+    <path d="M 20 20 L 40 20 L 50 45 L 65 15 L 75 15 L 55 55 L 45 55 L 35 35 L 25 55 L 15 55 Z" fill="#FF9900"/>
+    <text x="100" y="35" text-anchor="middle" class="service-label">AWS Lambda</text>
+    <text x="100" y="55" text-anchor="middle" class="description">health-event-formatter</text>
+    <text x="100" y="75" text-anchor="middle" class="description">Runtime: Node.js 20.x</text>
+    <text x="100" y="95" text-anchor="middle" class="description">• Format health events</text>
+    <text x="100" y="110" text-anchor="middle" class="description">• Create rich notifications</text>
+    <text x="100" y="125" text-anchor="middle" class="description">• Error handling</text>
+    <text x="100" y="140" text-anchor="middle" class="description">• Fallback messaging</text>
+  </g>
+  
+  <!-- SNS Topic -->
+  <g transform="translate(300, 580)">
+    <rect x="0" y="0" width="180" height="120" class="service-box" rx="8"/>
+    <!-- SNS Icon -->
+    <rect x="20" y="15" width="50" height="35" fill="#FF9900" rx="4"/>
+    <circle cx="30" cy="25" r="3" fill="white"/>
+    <circle cx="45" cy="25" r="3" fill="white"/>
+    <circle cx="60" cy="25" r="3" fill="white"/>
+    <line x1="30" y1="35" x2="25" y2="45" stroke="white" stroke-width="2"/>
+    <line x1="45" y1="35" x2="45" y2="45" stroke="white" stroke-width="2"/>
+    <line x1="60" y1="35" x2="65" y2="45" stroke="white" stroke-width="2"/>
+    <text x="90" y="35" text-anchor="middle" class="service-label">Amazon SNS</text>
+    <text x="90" y="55" text-anchor="middle" class="description">Topic: health-notifications</text>
+    <text x="90" y="75" text-anchor="middle" class="description">Formatted notifications</text>
+    <text x="90" y="90" text-anchor="middle" class="description">to subscribers</text>
+  </g>
+  
+  <!-- IAM -->
+  <g transform="translate(880, 200)">
+    <rect x="0" y="0" width="160" height="120" class="service-box" rx="8"/>
+    <!-- IAM Icon -->
+    <circle cx="35" cy="25" r="12" fill="#FF9900"/>
+    <rect x="25" y="35" width="20" height="15" fill="#FF9900" rx="2"/>
+    <text x="80" y="25" text-anchor="middle" class="service-label">AWS IAM</text>
+    <text x="80" y="45" text-anchor="middle" class="description">Lambda execution role</text>
+    <text x="80" y="60" text-anchor="middle" class="description">SNS publish policy</text>
+    <text x="80" y="75" text-anchor="middle" class="description">CloudWatch logs</text>
+  </g>
+  
+  <!-- CloudWatch Logs -->
+  <g transform="translate(880, 350)">
+    <rect x="0" y="0" width="160" height="100" class="service-box" rx="8"/>
+    <!-- CloudWatch Icon -->
+    <rect x="20" y="15" width="40" height="25" fill="#FF9900" rx="3"/>
+    <line x1="25" y1="25" x2="55" y2="25" stroke="white" stroke-width="1"/>
+    <line x1="25" y1="30" x2="50" y2="30" stroke="white" stroke-width="1"/>
+    <line x1="25" y1="35" x2="45" y2="35" stroke="white" stroke-width="1"/>
+    <text x="80" y="30" text-anchor="middle" class="service-label">CloudWatch</text>
+    <text x="80" y="50" text-anchor="middle" class="description">Lambda logs</text>
+    <text x="80" y="65" text-anchor="middle" class="description">Monitoring</text>
+    <text x="80" y="80" text-anchor="middle" class="description">Debugging</text>
+  </g>
+  
+  <!-- S3 Backend -->
+  <g transform="translate(80, 350)">
+    <rect x="0" y="0" width="160" height="100" class="service-box" rx="8"/>
+    <!-- S3 Icon -->
+    <path d="M 20 20 Q 20 15 25 15 L 55 15 Q 60 15 60 20 L 60 40 Q 60 45 55 45 L 25 45 Q 20 45 20 40 Z" fill="#FF9900"/>
+    <ellipse cx="40" cy="20" rx="20" ry="3" fill="#E67E22"/>
+    <text x="80" y="25" text-anchor="middle" class="service-label">Amazon S3</text>
+    <text x="80" y="45" text-anchor="middle" class="description">Terraform state</text>
+    <text x="80" y="60" text-anchor="middle" class="description">Native locking</text>
+    <text x="80" y="75" text-anchor="middle" class="description">Backend storage</text>
+  </g>
+  
+  <!-- Resource Groups -->
+  <g transform="translate(880, 480)">
+    <rect x="0" y="0" width="160" height="80" class="service-box" rx="8"/>
+    <!-- Resource Groups Icon -->
+    <rect x="20" y="15" width="15" height="15" fill="#FF9900" rx="2"/>
+    <rect x="40" y="15" width="15" height="15" fill="#FF9900" rx="2"/>
+    <rect x="20" y="35" width="15" height="15" fill="#FF9900" rx="2"/>
+    <rect x="40" y="35" width="15" height="15" fill="#FF9900" rx="2"/>
+    <text x="80" y="25" text-anchor="middle" class="service-label">Resource Groups</text>
+    <text x="80" y="45" text-anchor="middle" class="description">Environment tags</text>
+    <text x="80" y="60" text-anchor="middle" class="description">Service grouping</text>
+  </g>
+  
+  <!-- Data Flow Arrows -->
+  <!-- AWS Health to EventBridge -->
+  <line x1="220" y1="170" x2="300" y2="240" class="data-flow"/>
+  <text x="240" y="195" class="flow-text">Health Events</text>
+  
+  <!-- EventBridge to Lambda -->
+  <line x1="480" y1="270" x2="580" y2="400" class="data-flow"/>
+  <text x="520" y="325" class="flow-text">Trigger</text>
+  
+  <!-- Lambda to SNS -->
+  <line x1="620" y1="510" x2="450" y2="580" class="data-flow"/>
+  <text x="530" y="545" class="flow-text">Publish</text>
+  
+  <!-- Lambda to CloudWatch -->
+  <line x1="780" y1="430" x2="880" y2="400" class="arrow"/>
+  <text x="820" y="410" class="flow-text">Logs</text>
+  
+  <!-- Lambda to IAM (Permission relationship) -->
+  <line x1="740" y1="350" x2="880" y2="280" class="arrow"/>
+  <text x="800" y="310" class="flow-text">Uses</text>
+  
+  <!-- Environment Badges -->
+  <g transform="translate(50, 700)">
+    <rect x="0" y="0" width="80" height="60" fill="#E8F4FD" stroke="#4A90B8" stroke-width="2" rx="6"/>
+    <text x="40" y="20" text-anchor="middle" class="service-label">DEV</text>
+    <text x="40" y="35" text-anchor="middle" class="description">Development</text>
+    <text x="40" y="50" text-anchor="middle" class="description">Environment</text>
+  </g>
+  
+  <g transform="translate(150, 700)">
+    <rect x="0" y="0" width="80" height="60" fill="#FFE4E6" stroke="#FF7675" stroke-width="2" rx="6"/>
+    <text x="40" y="20" text-anchor="middle" class="service-label">PROD</text>
+    <text x="40" y="35" text-anchor="middle" class="description">Production</text>
+    <text x="40" y="50" text-anchor="middle" class="description">Environment</text>
+  </g>
+  
+  <!-- Notification Subscribers -->
+  <g transform="translate(100, 580)">
+    <rect x="0" y="0" width="120" height="80" fill="#F0F8FF" stroke="#4169E1" stroke-width="2" rx="6"/>
+    <!-- Email icon -->
+    <rect x="20" y="15" width="20" height="15" fill="#4169E1" rx="2"/>
+    <path d="M 20 15 L 30 22 L 40 15" stroke="white" stroke-width="1" fill="none"/>
+    <text x="60" y="25" text-anchor="middle" class="service-label">Subscribers</text>
+    <text x="60" y="40" text-anchor="middle" class="description">• Email alerts</text>
+    <text x="60" y="55" text-anchor="middle" class="description">• SMS notifications</text>
+  </g>
+  
+  <!-- SNS to Subscribers -->
+  <line x1="300" y1="620" x2="220" y2="620" class="data-flow"/>
+  <text x="250" y="610" class="flow-text">Notify</text>
+  
+  <!-- Legend -->
+  <g transform="translate(600, 700)">
+    <text x="0" y="0" class="service-label">Architecture Features:</text>
+    <text x="0" y="20" class="description">✓ Multi-environment deployment (dev/prod)</text>
+    <text x="0" y="35" class="description">✓ Enhanced event formatting with rich notifications</text>
+    <text x="0" y="50" class="description">✓ Comprehensive error handling and fallback messaging</text>
+    <text x="0" y="65" class="description">✓ AWS SDK v3 with Node.js 20.x runtime</text>
+  </g>
+  
+</svg>

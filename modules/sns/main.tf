@@ -15,6 +15,9 @@ resource "aws_sns_topic" "health_events" {
   name         = "${var.environment}-health-event-notifications"
   display_name = "AWS Health Events - ${var.environment}"
 
+  # Enable encryption with AWS managed key
+  kms_master_key_id = "alias/aws/sns"
+
   tags = merge(
     local.resource_tags,
     {

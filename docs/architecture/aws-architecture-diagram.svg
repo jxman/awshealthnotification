@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1000" height="700" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; fill: #232F3E; }
+      .service-label { font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; fill: #232F3E; }
+      .description { font-family: Arial, sans-serif; font-size: 12px; fill: #666; }
+      .flow-text { font-family: Arial, sans-serif; font-size: 11px; fill: #232F3E; }
+      .aws-orange { fill: #FF9900; }
+      .aws-blue { fill: #232F3E; }
+      .service-box { fill: #E8F4FD; stroke: #4A90B8; stroke-width: 2; }
+      .lambda-box { fill: #FFEAA7; stroke: #FDCB6E; stroke-width: 2; }
+      .sns-box { fill: #FFE4E6; stroke: #FF7675; stroke-width: 2; }
+      .eventbridge-box { fill: #E8F5E8; stroke: #6C5CE7; stroke-width: 2; }
+      .resource-group-box { fill: #F0F0F0; stroke: #636E72; stroke-width: 2; }
+      .arrow { stroke: #232F3E; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .data-flow { stroke: #E74C3C; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+     refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#232F3E" />
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1000" height="700" fill="#F8F9FA"/>
+  
+  <!-- Title -->
+  <text x="500" y="40" text-anchor="middle" class="title">AWS Health Notifications Architecture</text>
+  
+  <!-- AWS Health Events (Source) -->
+  <rect x="50" y="100" width="180" height="80" class="service-box" rx="8"/>
+  <text x="140" y="125" text-anchor="middle" class="service-label">AWS Health Events</text>
+  <text x="140" y="145" text-anchor="middle" class="description">Service health events</text>
+  <text x="140" y="160" text-anchor="middle" class="description">from AWS infrastructure</text>
+  
+  <!-- EventBridge -->
+  <rect x="300" y="200" width="180" height="120" class="eventbridge-box" rx="8"/>
+  <text x="390" y="225" text-anchor="middle" class="service-label">Amazon EventBridge</text>
+  <text x="390" y="245" text-anchor="middle" class="description">Event Rule:</text>
+  <text x="390" y="260" text-anchor="middle" class="description">health-event-notifications</text>
+  <text x="390" y="280" text-anchor="middle" class="description">Pattern: aws.health</text>
+  <text x="390" y="295" text-anchor="middle" class="description">Detail-type: AWS Health Event</text>
+  
+  <!-- Lambda Function -->
+  <rect x="550" y="350" width="200" height="140" class="lambda-box" rx="8"/>
+  <text x="650" y="375" text-anchor="middle" class="service-label">Lambda Function</text>
+  <text x="650" y="395" text-anchor="middle" class="description">health-event-formatter</text>
+  <text x="650" y="415" text-anchor="middle" class="description">Runtime: Node.js 20.x</text>
+  <text x="650" y="435" text-anchor="middle" class="description">• Formats health events</text>
+  <text x="650" y="450" text-anchor="middle" class="description">• Creates rich notifications</text>
+  <text x="650" y="465" text-anchor="middle" class="description">• Error handling &amp; fallback</text>
+  
+  <!-- SNS Topic -->
+  <rect x="300" y="550" width="180" height="100" class="sns-box" rx="8"/>
+  <text x="390" y="575" text-anchor="middle" class="service-label">Amazon SNS</text>
+  <text x="390" y="595" text-anchor="middle" class="description">Topic: health-event-notifications</text>
+  <text x="390" y="615" text-anchor="middle" class="description">Sends formatted notifications</text>
+  <text x="390" y="630" text-anchor="middle" class="description">to subscribers</text>
+  
+  <!-- Resource Groups -->
+  <rect x="780" y="200" width="180" height="80" class="resource-group-box" rx="8"/>
+  <text x="870" y="225" text-anchor="middle" class="service-label">Resource Groups</text>
+  <text x="870" y="245" text-anchor="middle" class="description">Groups resources by</text>
+  <text x="870" y="260" text-anchor="middle" class="description">Environment &amp; Service tags</text>
+  
+  <!-- IAM Roles -->
+  <rect x="780" y="350" width="180" height="100" class="service-box" rx="8"/>
+  <text x="870" y="375" text-anchor="middle" class="service-label">IAM Roles &amp; Policies</text>
+  <text x="870" y="395" text-anchor="middle" class="description">• Lambda execution role</text>
+  <text x="870" y="410" text-anchor="middle" class="description">• SNS publish permissions</text>
+  <text x="870" y="425" text-anchor="middle" class="description">• CloudWatch logs access</text>
+  
+  <!-- CloudWatch Logs -->
+  <rect x="780" y="480" width="180" height="80" class="service-box" rx="8"/>
+  <text x="870" y="505" text-anchor="middle" class="service-label">CloudWatch Logs</text>
+  <text x="870" y="525" text-anchor="middle" class="description">Lambda function logs</text>
+  <text x="870" y="540" text-anchor="middle" class="description">and monitoring</text>
+  
+  <!-- Data Flow Arrows -->
+  <!-- AWS Health to EventBridge -->
+  <line x1="230" y1="140" x2="300" y2="200" class="data-flow"/>
+  <text x="250" y="160" class="flow-text">Health Events</text>
+  
+  <!-- EventBridge to Lambda -->
+  <line x1="480" y1="260" x2="550" y2="380" class="data-flow"/>
+  <text x="500" y="310" class="flow-text">Trigger</text>
+  
+  <!-- Lambda to SNS -->
+  <line x1="600" y1="490" x2="450" y2="550" class="data-flow"/>
+  <text x="520" y="520" class="flow-text">Publish</text>
+  
+  <!-- Lambda to CloudWatch -->
+  <line x1="750" y1="420" x2="780" y2="460" class="arrow"/>
+  <text x="760" y="440" class="flow-text">Logs</text>
+  
+  <!-- Environment Labels -->
+  <rect x="50" y="620" width="100" height="60" fill="#E8F4FD" stroke="#4A90B8" stroke-width="1" rx="4"/>
+  <text x="100" y="640" text-anchor="middle" class="service-label">Environments</text>
+  <text x="100" y="655" text-anchor="middle" class="description">• dev</text>
+  <text x="100" y="670" text-anchor="middle" class="description">• prod</text>
+  
+  <!-- S3 Backend -->
+  <rect x="50" y="300" width="150" height="80" fill="#DFF0D8" stroke="#5CB85C" stroke-width="2" rx="8"/>
+  <text x="125" y="325" text-anchor="middle" class="service-label">S3 Backend</text>
+  <text x="125" y="345" text-anchor="middle" class="description">Terraform state storage</text>
+  <text x="125" y="360" text-anchor="middle" class="description">with native locking</text>
+  
+  <!-- Legend -->
+  <text x="750" y="620" class="service-label">Key Features:</text>
+  <text x="750" y="640" class="description">• Multi-environment support (dev/prod)</text>
+  <text x="750" y="655" class="description">• Enhanced event formatting with emojis</text>
+  <text x="750" y="670" class="description">• Comprehensive error handling</text>
+  
+</svg>

@@ -5,8 +5,7 @@
 *.tfstate
 *.tfstate.*
 
-# Ingnore the /scripts directory
-/scripts
+# Note: /scripts directory is now tracked (contains organized utility scripts)
 
 # Crash log files
 crash.log
@@ -64,3 +63,6 @@ deployment-*.log
 
 # Terraform plan files
 *.tfplan
+
+# Snyk Security Extension - AI Rules (auto-generated)
+.github/instructions/snyk_rules.instructions.md
