@@ -66,9 +66,6 @@ resource "aws_lambda_function" "health_formatter" {
   # Publish a new version when code changes
   publish = true
 
-  # Ensure Lambda updates when code changes
-  depends_on = [null_resource.lambda_trigger]
-
   environment {
     variables = {
       ENVIRONMENT   = upper(var.environment)
@@ -170,17 +167,3 @@ resource "aws_lambda_permission" "allow_eventbridge" {
 
 # Data source for current AWS region
 data "aws_region" "current" {}
-
-# Null resource to trigger Lambda updates when source code changes
-resource "null_resource" "lambda_trigger" {
-  # This will change whenever the Lambda source code changes
-  triggers = {
-    source_code_hash = data.archive_file.lambda_zip.output_base64sha256
-    lambda_file_hash = filebase64sha256("${path.module}/lambda/index.js")
-  }
-
-  # Optional: Clean up old ZIP files
-  provisioner "local-exec" {
-    command = "find ${path.module} -name 'lambda_function_*.zip' -type f -not -name '${basename(data.archive_file.lambda_zip.output_path)}' -delete || true"
-  }
-}
