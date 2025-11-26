@@ -1,3 +1,36 @@
+/**
+ * # EventBridge Health Notifications Module
+ *
+ * This module creates an EventBridge rule that captures AWS Health Events and routes them
+ * through a Lambda function for formatting before sending to an SNS topic.
+ *
+ * ## Features
+ *
+ * - **EventBridge Rule**: Captures all AWS Health Events from aws.health source
+ * - **Lambda Formatter**: Node.js 20.x function that formats events into human-readable notifications
+ * - **Environment Control**: Enable/disable notifications per environment without destroying resources
+ * - **CloudWatch Logs**: Full logging integration for Lambda execution
+ * - **Least-Privilege IAM**: Minimal permissions for Lambda execution (SNS publish + CloudWatch Logs)
+ * - **Auto-Deployment**: Lambda code changes automatically detected and deployed via source hash
+ *
+ * ## Event Flow
+ *
+ * ```
+ * AWS Health Events → EventBridge Rule → Lambda Function → SNS Topic → Subscribers
+ * ```
+ *
+ * ## Lambda Function
+ *
+ * The Lambda function (Node.js 20.x) enhances AWS Health Event notifications with:
+ * - Formatted event summaries with severity indicators
+ * - Affected resource details
+ * - Event timeline information
+ * - Action recommendations
+ *
+ * Lambda code is located in `./lambda/` and automatically packaged as a ZIP file with
+ * change detection based on source hash.
+ */
+
 resource "aws_cloudwatch_event_rule" "health_events" {
   name        = "${var.environment}-health-event-notifications"
   description = "Captures AWS Health Events for ${var.environment}"

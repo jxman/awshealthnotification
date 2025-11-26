@@ -117,15 +117,21 @@ graph TB
 │   │   │   └── index.js          # Lambda notification formatter
 │   │   ├── main.tf               # EventBridge resources
 │   │   ├── variables.tf          # Module variables
-│   │   └── outputs.tf            # Module outputs
+│   │   ├── outputs.tf            # Module outputs
+│   │   ├── versions.tf           # Terraform/provider versions
+│   │   └── README.md             # Module documentation
 │   ├── sns/                      # SNS notification module
 │   │   ├── main.tf               # SNS topic & policies
 │   │   ├── variables.tf          # Module variables
-│   │   └── outputs.tf            # Module outputs
+│   │   ├── outputs.tf            # Module outputs
+│   │   ├── versions.tf           # Terraform/provider versions
+│   │   └── README.md             # Module documentation
 │   └── resource_groups/          # Resource organization module
 │       ├── main.tf               # Resource group definitions
 │       ├── variables.tf          # Module variables
-│       └── outputs.tf            # Module outputs
+│       ├── outputs.tf            # Module outputs
+│       ├── versions.tf           # Terraform/provider versions
+│       └── README.md             # Module documentation
 ├── 🚀 Scripts & Tools
 │   ├── deploy.sh                 # Deployment helper script
 │   ├── init.sh                   # Environment initialization
@@ -136,6 +142,9 @@ graph TB
 │   ├── README.md                 # This file
 │   ├── TAGGING_STRATEGY.md       # Resource tagging guidelines
 │   ├── deployment.md             # Deployment procedures
+│   ├── .pre-commit-config.yaml   # Pre-commit hooks config
+│   ├── .terraform-docs.yml       # Terraform-docs configuration
+│   ├── .trivyignore              # Trivy security exceptions
 │   └── .gitignore                # Git ignore rules
 ```
 
@@ -382,6 +391,60 @@ Set up CloudWatch alarms for:
 - Lambda function failures > 5%
 - SNS delivery failures > 10%
 - EventBridge processing delays > 5 minutes
+
+## 📖 Documentation
+
+### Module Documentation
+
+Each Terraform module includes comprehensive documentation:
+
+- **EventBridge Module**: See `modules/eventbridge/README.md`
+- **SNS Module**: See `modules/sns/README.md`
+- **Resource Groups Module**: See `modules/resource_groups/README.md`
+
+Module documentation is automatically generated using [terraform-docs](https://terraform-docs.io/) and includes:
+- Module overview and features
+- Usage examples
+- Input variables reference
+- Output values reference
+- Resource details
+
+### Generating Documentation
+
+Documentation is automatically updated via pre-commit hooks:
+
+```bash
+# Install pre-commit (if not already installed)
+brew install pre-commit  # macOS
+# or
+pip install pre-commit   # Python
+
+# Install pre-commit hooks
+pre-commit install
+
+# Manually run all hooks
+pre-commit run --all-files
+
+# Run only terraform-docs
+pre-commit run terraform_docs --all-files
+```
+
+The terraform-docs hook will:
+1. Scan all module directories for Terraform files
+2. Generate markdown documentation from code
+3. Inject documentation between `<!-- BEGIN_TF_DOCS -->` and `<!-- END_TF_DOCS -->` markers
+4. Preserve custom content outside these markers
+
+### Pre-Commit Hooks
+
+This project uses pre-commit hooks for code quality:
+
+- **terraform_fmt**: Formats Terraform code to canonical format
+- **terraform_validate**: Validates Terraform configuration
+- **terraform_docs**: Generates module documentation
+- **terraform_tflint**: Lints Terraform for best practices
+- **terraform_trivy**: Scans for security issues
+- **General hooks**: Trailing whitespace, YAML syntax, large files, AWS credentials detection
 
 ## 🔧 Maintenance
 
