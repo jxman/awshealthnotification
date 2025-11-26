@@ -164,6 +164,3 @@ resource "aws_lambda_permission" "allow_eventbridge" {
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.health_events.arn
 }
-
-# Data source for current AWS region
-data "aws_region" "current" {}

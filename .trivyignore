@@ -1,0 +1,12 @@
+# Trivy ignore file for acceptable security exceptions
+
+# AVD-AWS-0136: SNS topic using AWS-managed KMS key
+# Justification: AWS-managed keys are acceptable for this use case.
+# Customer-managed keys add complexity without significant security benefit
+# for health event notifications that don't contain sensitive data.
+AVD-AWS-0136
+
+# AVD-AWS-0066: Lambda function X-Ray tracing not enabled
+# Justification: X-Ray tracing adds cost and complexity for this simple
+# notification formatter. CloudWatch Logs provide sufficient observability.
+AVD-AWS-0066
