@@ -1,5 +1,6 @@
 resource "aws_resourcegroups_group" "health_notifications" {
-  name = "${var.environment}-health-notifications"
+  name        = "${var.environment}-health-notifications"
+  description = "Resource group for AWS Health Notifications infrastructure in ${var.environment} environment"
 
   resource_query {
     query = jsonencode({

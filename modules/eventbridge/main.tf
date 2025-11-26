@@ -52,6 +52,7 @@ data "archive_file" "lambda_zip" {
 # Create the Lambda function with enhanced change detection
 resource "aws_lambda_function" "health_formatter" {
   function_name = "${var.environment}-health-event-formatter"
+  description   = "Formats AWS Health Events into enhanced notifications for SNS distribution"
   role          = aws_iam_role.lambda_role.arn
   handler       = "index.handler"
   runtime       = "nodejs20.x"
@@ -86,7 +87,8 @@ resource "aws_lambda_function" "health_formatter" {
 
 # Create the IAM role for the Lambda function
 resource "aws_iam_role" "lambda_role" {
-  name = "${var.environment}-health-formatter-role"
+  name        = "${var.environment}-health-formatter-role"
+  description = "Execution role for health event formatter Lambda function with SNS publish and CloudWatch Logs permissions"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
