@@ -21,8 +21,8 @@ resource "aws_sns_topic" "health_events" {
   tags = merge(
     local.resource_tags,
     {
-      Name    = "${var.environment}-health-event-notifications"
-      Service = "notifications"
+      Name       = "${var.environment}-health-event-notifications"
+      SubService = "health-notifications-topic"
     }
   )
 }

@@ -8,7 +8,13 @@ resource "aws_cloudwatch_event_rule" "health_events" {
     detail-type = ["AWS Health Event"]
   })
 
-  tags = var.tags
+  tags = merge(
+    var.tags,
+    {
+      Name       = "${var.environment}-health-event-rule"
+      SubService = "health-event-rule"
+    }
+  )
 }
 
 # Define local variables for tags
@@ -72,8 +78,8 @@ resource "aws_lambda_function" "health_formatter" {
   tags = merge(
     local.resource_tags,
     {
-      Name     = "${var.environment}-health-event-formatter"
-      Function = "event-formatting"
+      Name       = "${var.environment}-health-event-formatter"
+      SubService = "health-event-formatter-lambda"
     }
   )
 }
@@ -98,8 +104,8 @@ resource "aws_iam_role" "lambda_role" {
   tags = merge(
     local.resource_tags,
     {
-      Name = "${var.environment}-health-formatter-role"
-      Role = "lambda-execution"
+      Name       = "${var.environment}-health-formatter-role"
+      SubService = "lambda-execution-role"
     }
   )
 }

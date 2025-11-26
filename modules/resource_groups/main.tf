@@ -25,7 +25,8 @@ resource "aws_resourcegroups_group" "health_notifications" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.environment}-health-notifications-resource-group"
+      Name       = "${var.environment}-health-notifications-resource-group"
+      SubService = "resource-group"
     }
   )
 }

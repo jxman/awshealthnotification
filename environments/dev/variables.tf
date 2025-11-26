@@ -21,21 +21,3 @@ variable "github_repo" {
   type        = string
   default     = "aws-health-notifications" # Replace with your actual repo name
 }
-
-variable "owner_team" {
-  description = "Team responsible for these resources"
-  type        = string
-  default     = "platform-team"
-}
-
-variable "cost_center" {
-  description = "Cost center for billing purposes"
-  type        = string
-  default     = "platform-engineering"
-}
-
-variable "tags" {
-  description = "Additional resource tags"
-  type        = map(string)
-  default     = {}
-}

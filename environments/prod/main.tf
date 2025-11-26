@@ -14,31 +14,25 @@ provider "aws" {
   region = var.aws_region
 
   default_tags {
-    tags = {
-      Environment       = var.environment
-      ManagedBy         = "terraform"
-      TerraformWorkflow = "github-actions"
-      Project           = "aws-health-notifications"
-    }
+    tags = local.common_tags
   }
 }
 
 # Define common tags
 locals {
   common_tags = {
-    Environment       = var.environment
-    Service           = "aws-health-notifications"
-    ManagedBy         = "terraform"
-    TerraformRepo     = "github.com/${var.github_org}/${var.github_repo}"
-    TerraformWorkflow = "github-actions"
-    Owner             = var.owner_team
-    CostCenter        = var.cost_center
-    Project           = "health-monitoring"
-    CreatedBy         = "terraform-aws-health-notification"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Owner       = "John Xanthopoulos"
+    Project     = "aws-health-notifications"
+    Service     = "aws-health-notifications"
+    GithubRepo  = "github.com/${var.github_org}/${var.github_repo}"
+    Site        = "N/A"
+    BaseProject = "aws-health-notifications"
   }
 
-  # Merge common tags with any resource-specific tags
-  resource_tags = merge(local.common_tags, var.tags)
+  # Use common_tags directly (no additional tags to merge)
+  resource_tags = local.common_tags
 }
 
 module "sns" {
