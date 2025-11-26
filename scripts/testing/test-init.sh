@@ -20,7 +20,7 @@ echo ""
 extract_value() {
     local file="$1"
     local key="$2"
-    
+
     # Extract the value, handling both quoted and unquoted values
     if [ -f "$file" ]; then
         grep "^[[:space:]]*${key}[[:space:]]*=" "$file" | \
@@ -53,14 +53,14 @@ GITHUB_WORKFLOW=".github/workflows/terraform.yml"
 
 if [ -f "$GITHUB_WORKFLOW" ]; then
     echo -e "${GREEN}✅ GitHub Actions workflow found${NC}"
-    
+
     # Check for expected patterns
     if grep -q "health-notifications/.*terraform.tfstate" "$GITHUB_WORKFLOW"; then
         echo -e "${GREEN}✅ Workflow uses expected state key pattern${NC}"
     else
         echo -e "${YELLOW}⚠️  Workflow state key pattern may differ${NC}"
     fi
-    
+
     if grep -q "use_lockfile = true" "$GITHUB_WORKFLOW"; then
         echo -e "${GREEN}✅ Workflow uses S3 native locking${NC}"
     else
@@ -85,7 +85,7 @@ EXPECTED_REGION="us-east-1"
 if [ -f "backend/dev.hcl" ]; then
     echo -e "${GREEN}✅ backend/dev.hcl exists${NC}"
     ((PASS_COUNT++))
-    
+
     DEV_KEY=$(extract_value "backend/dev.hcl" "key")
     if [ "$DEV_KEY" = "$EXPECTED_DEV_KEY" ]; then
         echo -e "${GREEN}✅ Dev key matches GitHub Actions pattern${NC}"
@@ -93,7 +93,7 @@ if [ -f "backend/dev.hcl" ]; then
     else
         echo -e "${RED}❌ Dev key mismatch: '$DEV_KEY' != '$EXPECTED_DEV_KEY'${NC}"
     fi
-    
+
     DEV_REGION=$(extract_value "backend/dev.hcl" "region")
     if [ "$DEV_REGION" = "$EXPECTED_REGION" ]; then
         echo -e "${GREEN}✅ Dev region matches GitHub Actions${NC}"
@@ -101,7 +101,7 @@ if [ -f "backend/dev.hcl" ]; then
     else
         echo -e "${RED}❌ Dev region mismatch: '$DEV_REGION' != '$EXPECTED_REGION'${NC}"
     fi
-    
+
     DEV_LOCKFILE=$(extract_value "backend/dev.hcl" "use_lockfile")
     if [ "$DEV_LOCKFILE" = "true" ]; then
         echo -e "${GREEN}✅ Dev uses S3 native locking${NC}"
@@ -117,7 +117,7 @@ fi
 if [ -f "backend/prod.hcl" ]; then
     echo -e "${GREEN}✅ backend/prod.hcl exists${NC}"
     ((PASS_COUNT++))
-    
+
     PROD_KEY=$(extract_value "backend/prod.hcl" "key")
     if [ "$PROD_KEY" = "$EXPECTED_PROD_KEY" ]; then
         echo -e "${GREEN}✅ Prod key matches GitHub Actions pattern${NC}"
@@ -125,15 +125,15 @@ if [ -f "backend/prod.hcl" ]; then
     else
         echo -e "${RED}❌ Prod key mismatch: '$PROD_KEY' != '$EXPECTED_PROD_KEY'${NC}"
     fi
-    
-    PROD_REGION=$(extract_value "backend/prod.hcl" "region") 
+
+    PROD_REGION=$(extract_value "backend/prod.hcl" "region")
     if [ "$PROD_REGION" = "$EXPECTED_REGION" ]; then
         echo -e "${GREEN}✅ Prod region matches GitHub Actions${NC}"
         ((PASS_COUNT++))
     else
         echo -e "${RED}❌ Prod region mismatch: '$PROD_REGION' != '$EXPECTED_REGION'${NC}"
     fi
-    
+
     PROD_LOCKFILE=$(extract_value "backend/prod.hcl" "use_lockfile")
     if [ "$PROD_LOCKFILE" = "true" ]; then
         echo -e "${GREEN}✅ Prod uses S3 native locking${NC}"
@@ -182,7 +182,7 @@ echo "Prod bucket: '$PROD_BUCKET'"
 if [ "$DEV_BUCKET" = "$PROD_BUCKET" ] && [ -n "$DEV_BUCKET" ]; then
     echo -e "${GREEN}✅ Dev and Prod use same S3 bucket: $DEV_BUCKET${NC}"
     echo -e "${GREEN}✅ Matches GitHub Actions single bucket approach${NC}"
-    
+
     # Test bucket access if possible
     if aws s3 ls "s3://$DEV_BUCKET" >/dev/null 2>&1; then
         echo -e "${GREEN}✅ S3 bucket is accessible${NC}"
@@ -226,7 +226,7 @@ echo "  3. Update bucket names in backend/*.hcl if needed"
 echo ""
 
 echo -e "${YELLOW}📝 To test initialization:${NC}"
-echo "  1. Run: ./validate-backend.sh (detailed validation)"  
+echo "  1. Run: ./validate-backend.sh (detailed validation)"
 echo "  2. Run: ./init.sh dev (initialize dev)"
 echo "  3. Run: ./init.sh prod (initialize prod)"
 echo ""

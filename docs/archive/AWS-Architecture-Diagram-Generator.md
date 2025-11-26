@@ -140,19 +140,19 @@ terraform-diagram-generator/
 class TerraformParser:
     def __init__(self, project_path):
         self.project_path = project_path
-        
+
     def parse_main_files(self):
         """Parse main.tf files in environments/"""
-        
+
     def parse_modules(self):
         """Parse module configurations"""
-        
+
     def extract_resources(self):
         """Extract AWS resources and their types"""
-        
+
     def identify_data_flows(self):
         """Identify data flow between services"""
-        
+
     def get_environments(self):
         """Detect multi-environment setup"""
 ```
@@ -177,10 +177,10 @@ class AWSServiceMapper:
         },
         # ... more mappings
     }
-    
+
     def map_terraform_to_aws(self, terraform_resources):
         """Map Terraform resources to AWS services"""
-        
+
     def get_service_icon(self, service_name):
         """Get official AWS icon for service"""
 ```
@@ -192,13 +192,13 @@ class LayoutEngine:
     def __init__(self, canvas_width=1400, canvas_height=900):
         self.canvas_width = canvas_width
         self.canvas_height = canvas_height
-        
+
     def calculate_positions(self, services, flows):
         """Calculate optimal positions for services"""
-        
+
     def arrange_data_flow(self, source, target):
         """Calculate arrow paths for data flow"""
-        
+
     def apply_layout_rules(self):
         """Apply spacing and alignment rules"""
 ```
@@ -209,13 +209,13 @@ class LayoutEngine:
 class SVGGenerator:
     def __init__(self, aws_icons_path):
         self.icons_path = aws_icons_path
-        
+
     def create_service_component(self, service_info, position):
         """Create SVG component for AWS service"""
-        
+
     def add_data_flow_arrows(self, flows):
         """Add arrows showing data flow"""
-        
+
     def generate_diagram(self, services, flows, layout):
         """Generate complete SVG diagram"""
 ```
@@ -227,13 +227,13 @@ class SVGGenerator:
 ```yaml
 services:
   lambda:
-    terraform_types: 
+    terraform_types:
       - aws_lambda_function
     display_name: "AWS Lambda"
     icon_file: "Arch_AWS-Lambda_64.svg"
     category: "compute"
     color: "#ED7100"
-    
+
   eventbridge:
     terraform_types:
       - aws_cloudwatch_event_rule
@@ -259,24 +259,24 @@ layout:
   canvas:
     width: 1400
     height: 900
-    
+
   service_box:
     width: 200
     height: 130
     padding: 20
     border_radius: 8
-    
+
   icon:
     size: 80
     scale: 0.7
     position: "top-center"
     margin_bottom: 20
-    
+
   text:
     title_offset_y: 105
     description_offset_y: 125
     line_height: 15
-    
+
   arrows:
     data_flow:
       color: "#FF6B35"
@@ -324,19 +324,19 @@ def generate_diagram(terraform_project_path, output_path):
     parser = TerraformParser(terraform_project_path)
     resources = parser.extract_resources()
     flows = parser.identify_data_flows()
-    
+
     # Step 2: Map to AWS services
     mapper = AWSServiceMapper()
     services = mapper.map_terraform_to_aws(resources)
-    
+
     # Step 3: Calculate layout
     layout_engine = LayoutEngine()
     layout = layout_engine.calculate_positions(services, flows)
-    
+
     # Step 4: Generate SVG
     svg_gen = SVGGenerator('src/assets/aws-icons/')
     diagram = svg_gen.generate_diagram(services, flows, layout)
-    
+
     # Step 5: Save diagram
     with open(output_path, 'w') as f:
         f.write(diagram)
@@ -445,23 +445,23 @@ diagram:
   canvas:
     width: 1600
     height: 1000
-    
+
   filters:
-    include_services: 
+    include_services:
       - lambda
       - apigateway
       - dynamodb
       - s3
     exclude_environments:
       - test
-      
+
   layout:
     style: "layered"  # layered, circular, hierarchical
     direction: "left-to-right"
     spacing:
       service: 50
       layer: 100
-      
+
   styling:
     theme: "aws-official"
     show_service_details: true

@@ -9,7 +9,7 @@ echo "====================="
 # Files to remove (created during our troubleshooting session)
 TEMP_FILES=(
     "quick-test.sh"
-    "test-parsing.sh" 
+    "test-parsing.sh"
     "make-executable.sh"
     "final-cleanup.sh"
 )
@@ -29,7 +29,7 @@ done
 for bakfile in *.bak; do
     if [ -f "$bakfile" ]; then
         rm "$bakfile"
-        echo "✓ Removed backup: $bakfile"  
+        echo "✓ Removed backup: $bakfile"
         ((REMOVED++))
     fi
 done
@@ -44,7 +44,7 @@ fi
 echo ""
 echo "📋 Essential scripts preserved:"
 echo "  • init.sh - Initialize environments"
-echo "  • deploy.sh - Deploy to environments"  
+echo "  • deploy.sh - Deploy to environments"
 echo "  • validate-backend.sh - Validate configuration"
 echo "  • setup-summary.sh - Project status"
 echo "  • cleanup-project.sh - Main cleanup utility"

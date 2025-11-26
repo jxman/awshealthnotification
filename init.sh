@@ -64,21 +64,21 @@ if [ ! -f "$BACKEND_CONFIG" ]; then
     echo -e "${RED}❌ Error: Backend configuration not found at $BACKEND_CONFIG${NC}"
     echo ""
     echo "Creating GitHub Actions compatible backend configuration..."
-    
+
     # Create backend directory if it doesn't exist
     mkdir -p backend
-    
+
     # Prompt for S3 bucket name (should match GitHub secret TF_STATE_BUCKET)
     echo -e "${YELLOW}⚙️  Backend Configuration Setup${NC}"
     echo "This should match your GitHub Actions TF_STATE_BUCKET secret"
     echo ""
-    
+
     read -p "S3 Bucket name for Terraform state (from GitHub secret): " S3_BUCKET
     if [ -z "$S3_BUCKET" ]; then
         echo -e "${RED}❌ Error: S3 bucket name is required${NC}"
         exit 1
     fi
-    
+
     # Create backend configuration matching GitHub Actions pattern
     cat > "$BACKEND_CONFIG" << EOF
 # S3 backend configuration for $ENV environment
@@ -89,7 +89,7 @@ region       = "us-east-1"
 encrypt      = true
 use_lockfile = true
 EOF
-    
+
     echo ""
     echo -e "${GREEN}✅ Backend configuration created matching GitHub Actions pattern${NC}"
     echo ""

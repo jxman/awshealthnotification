@@ -17,7 +17,7 @@ NC='\033[0m'
 extract_value() {
     local file="$1"
     local key="$2"
-    
+
     # Extract the value, handling both quoted and unquoted values
     if [ -f "$file" ]; then
         grep "^[[:space:]]*${key}[[:space:]]*=" "$file" | \
@@ -39,7 +39,7 @@ echo ""
 
 echo -e "${BLUE}🎯 What's Been Fixed & Enhanced:${NC}"
 echo "  • Backend configurations now match GitHub Actions workflow exactly"
-echo "  • Both dev and prod use the same S3 bucket (consistent with CI/CD)"  
+echo "  • Both dev and prod use the same S3 bucket (consistent with CI/CD)"
 echo "  • State keys follow GitHub pattern: health-notifications/{env}/terraform.tfstate"
 echo "  • S3 native locking enabled (use_lockfile = true)"
 echo "  • Enhanced init.sh with validation and GitHub Actions alignment"
@@ -118,7 +118,7 @@ echo "============================="
 echo ""
 echo -e "${GREEN}🔧 Core Scripts:${NC}"
 echo "  • init.sh              - Initialize Terraform (GitHub Actions aligned)"
-echo "  • deploy.sh            - Deploy to environments" 
+echo "  • deploy.sh            - Deploy to environments"
 echo "  • cleanup-project.sh   - Clean unnecessary files"
 echo ""
 echo -e "${GREEN}🧪 Testing & Validation:${NC}"
@@ -129,7 +129,7 @@ echo "  • test-lambda-formatter.sh - Test Lambda function"
 echo ""
 echo -e "${GREEN}📋 Documentation:${NC}"
 echo "  • README.md           - Complete project documentation"
-echo "  • TAGGING_STRATEGY.md - Resource tagging guidelines"  
+echo "  • TAGGING_STRATEGY.md - Resource tagging guidelines"
 echo "  • deployment.md       - Deployment procedures"
 echo ""
 
@@ -207,7 +207,7 @@ else
     echo ""
     echo -e "${YELLOW}Run these commands to fix:${NC}"
     echo "  1. ./validate-backend.sh  # See detailed issues"
-    echo "  2. ./init.sh dev         # Fix dev configuration"  
+    echo "  2. ./init.sh dev         # Fix dev configuration"
     echo "  3. ./init.sh prod        # Fix prod configuration"
     echo "  4. Run this script again to verify"
 fi

@@ -192,7 +192,7 @@ I need to create a professional AWS architecture diagram from my Terraform proje
 2. Identify AWS services, their relationships, and data flows
 3. Detect multi-environment setup
 
-## Phase 2: Asset Integration  
+## Phase 2: Asset Integration
 1. Use the AWS asset package at: '[YOUR_ASSET_PATH]'
 2. Find the 64px SVG icons for each identified service
 3. Extract SVG content for embedding
@@ -209,7 +209,7 @@ I need to create a professional AWS architecture diagram from my Terraform proje
 ## Requirements:
 - Professional appearance matching AWS standards
 - Clear service relationships and data flows
-- Proper icon positioning and text alignment  
+- Proper icon positioning and text alignment
 - No overlapping elements
 - Consistent spacing throughout
 
@@ -293,7 +293,7 @@ If specific service icons are not found:
    # Lambda might be:
    - Arch_AWS-Lambda_64.svg
    - Arch_Lambda_64.svg
-   
+
    # SNS might be:
    - Arch_Amazon-Simple-Notification-Service_64.svg
    - Arch_SNS_64.svg
@@ -415,7 +415,7 @@ Add diagrams to your project README:
 ### Components
 
 - **EventBridge**: Routes AWS Health events
-- **Lambda**: Processes and formats notifications  
+- **Lambda**: Processes and formats notifications
 - **SNS**: Distributes notifications to subscribers
 ```
 

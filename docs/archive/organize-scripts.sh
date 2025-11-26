@@ -49,18 +49,18 @@ check_script() {
 move_script() {
     local script=$1
     local target_dir=$2
-    
+
     if [ -f "$script" ]; then
         # Ensure target directory exists
         mkdir -p "$target_dir"
-        
+
         # Move the script
         mv "$script" "$target_dir/"
         echo "  ✅ Moved $script → $target_dir/"
-        
+
         # Make sure it's executable
         chmod +x "$target_dir/$script"
-        
+
         return 0
     else
         echo "  ⚠️  $script not found, skipping"
@@ -72,7 +72,7 @@ move_script() {
 create_wrapper() {
     local script_name=$1
     local target_path=$2
-    
+
     cat > "$script_name" << EOF
 #!/bin/bash
 # Wrapper script for backward compatibility
@@ -87,7 +87,7 @@ fi
 # Execute the target script with all arguments
 exec "$target_path" "\$@"
 EOF
-    
+
     chmod +x "$script_name"
     echo "  🔗 Created wrapper: $script_name → $target_path"
 }
@@ -151,7 +151,7 @@ echo ""
 # Create directory structure
 echo -e "${BLUE}📁 Creating directory structure...${NC}"
 mkdir -p scripts/testing
-mkdir -p scripts/utilities  
+mkdir -p scripts/utilities
 mkdir -p scripts/legacy
 echo "  ✅ Created scripts/testing/"
 echo "  ✅ Created scripts/utilities/"
@@ -234,7 +234,7 @@ Backup and legacy scripts:
 # Run testing scripts
 ./scripts/testing/test-health-notification.sh dev
 
-# Run utility scripts  
+# Run utility scripts
 ./scripts/utilities/setup-summary.sh
 
 # Access legacy scripts
@@ -252,7 +252,7 @@ Backup and legacy scripts:
 
 Essential scripts remain in the root directory for easy access:
 - `init.sh` - Environment initialization
-- `deploy.sh` - Main deployment script  
+- `deploy.sh` - Main deployment script
 - `validate-backend.sh` - Configuration validation
 
 ## 🔄 Backward Compatibility
@@ -307,7 +307,7 @@ Or from the root directory:
 ```
 EOF
 
-# Utilities scripts README  
+# Utilities scripts README
 cat > "scripts/utilities/README.md" << 'EOF'
 # 🛠️ Utility Scripts
 

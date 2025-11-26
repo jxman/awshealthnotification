@@ -27,7 +27,7 @@ LOG_FILES=()
 add_if_exists() {
     local file="$1"
     local array_name="$2"
-    
+
     if [ -f "$file" ] || [ -d "$file" ]; then
         case $array_name in
             "generated") GENERATED_FILES+=("$file") ;;
@@ -80,7 +80,7 @@ display_files() {
     local title="$1"
     local color="$2"
     local category="$3"
-    
+
     # Create a temporary array based on category
     local files_to_show=()
     case $category in
@@ -100,7 +100,7 @@ display_files() {
             files_to_show=("${LOG_FILES[@]}")
             ;;
     esac
-    
+
     if [ ${#files_to_show[@]} -gt 0 ]; then
         echo -e "${color}${title}${NC}"
         for file in "${files_to_show[@]}"; do
@@ -177,7 +177,7 @@ echo -e "${GREEN}🧹 Starting cleanup...${NC}"
 safe_remove() {
     local item="$1"
     local category="$2"
-    
+
     if [ -f "$item" ]; then
         rm "$item" && echo -e "  ${GREEN}✓${NC} Removed file: $item"
     elif [ -d "$item" ]; then

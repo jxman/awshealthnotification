@@ -1,0 +1,56 @@
+# Pre-commit hooks configuration for AWS Health Notifications
+# See https://pre-commit.com for more information
+
+repos:
+  # Terraform hooks
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.96.1
+    hooks:
+      - id: terraform_fmt
+        name: Terraform format
+        description: Rewrites Terraform files to canonical format
+
+      - id: terraform_validate
+        name: Terraform validate
+        description: Validates Terraform configuration files
+        args:
+          - --hook-config=--retry-once-with-cleanup=true
+          - --tf-init-args=-backend=false
+
+  # General pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+        stages: [pre-commit]
+
+      - id: end-of-file-fixer
+        name: Fix end of files
+        stages: [pre-commit]
+
+      - id: check-yaml
+        name: Check YAML syntax
+        stages: [pre-commit]
+
+      - id: check-added-large-files
+        name: Check for large files (>500KB)
+        stages: [pre-commit]
+        args: ['--maxkb=500']
+
+      - id: check-merge-conflict
+        name: Check for merge conflict markers
+        stages: [pre-commit]
+
+      - id: detect-aws-credentials
+        name: Detect AWS credentials in files
+        stages: [pre-commit]
+        args: ['--allow-missing-credentials']
+
+      - id: detect-private-key
+        name: Detect private keys
+        stages: [pre-commit]
+
+      - id: check-case-conflict
+        name: Check for case conflicts in filenames
+        stages: [pre-commit]

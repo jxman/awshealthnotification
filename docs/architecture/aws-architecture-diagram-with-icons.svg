@@ -12,11 +12,11 @@
       .arrow { stroke: #FF9900; stroke-width: 3; fill: none; marker-end: url(#arrowhead); }
       .data-flow { stroke: #E74C3C; stroke-width: 3; fill: none; marker-end: url(#arrowhead-red); }
     </style>
-    <marker id="arrowhead" markerWidth="12" markerHeight="10" 
+    <marker id="arrowhead" markerWidth="12" markerHeight="10"
      refX="10" refY="5" orient="auto">
       <polygon points="0 0, 12 5, 0 10" fill="#FF9900" />
     </marker>
-    <marker id="arrowhead-red" markerWidth="12" markerHeight="10" 
+    <marker id="arrowhead-red" markerWidth="12" markerHeight="10"
      refX="10" refY="5" orient="auto">
       <polygon points="0 0, 12 5, 0 10" fill="#E74C3C" />
     </marker>
@@ -24,10 +24,10 @@
 
   <!-- Background -->
   <rect width="1200" height="800" fill="#FAFAFA"/>
-  
+
   <!-- Title -->
   <text x="600" y="40" text-anchor="middle" class="title">AWS Health Notifications Architecture</text>
-  
+
   <!-- AWS Health Events -->
   <g transform="translate(80, 120)">
     <rect x="0" y="0" width="140" height="100" class="service-box" rx="8"/>
@@ -38,7 +38,7 @@
     <text x="70" y="75" text-anchor="middle" class="description">Service Events</text>
     <text x="70" y="90" text-anchor="middle" class="description">Source</text>
   </g>
-  
+
   <!-- EventBridge -->
   <g transform="translate(300, 200)">
     <rect x="0" y="0" width="180" height="140" class="service-box" rx="8"/>
@@ -54,7 +54,7 @@
     <text x="90" y="100" text-anchor="middle" class="description">Pattern: aws.health</text>
     <text x="90" y="115" text-anchor="middle" class="description">AWS Health Event</text>
   </g>
-  
+
   <!-- Lambda Function -->
   <g transform="translate(580, 350)">
     <rect x="0" y="0" width="200" height="160" class="service-box" rx="8"/>
@@ -68,7 +68,7 @@
     <text x="100" y="125" text-anchor="middle" class="description">• Error handling</text>
     <text x="100" y="140" text-anchor="middle" class="description">• Fallback messaging</text>
   </g>
-  
+
   <!-- SNS Topic -->
   <g transform="translate(300, 580)">
     <rect x="0" y="0" width="180" height="120" class="service-box" rx="8"/>
@@ -85,7 +85,7 @@
     <text x="90" y="75" text-anchor="middle" class="description">Formatted notifications</text>
     <text x="90" y="90" text-anchor="middle" class="description">to subscribers</text>
   </g>
-  
+
   <!-- IAM -->
   <g transform="translate(880, 200)">
     <rect x="0" y="0" width="160" height="120" class="service-box" rx="8"/>
@@ -97,7 +97,7 @@
     <text x="80" y="60" text-anchor="middle" class="description">SNS publish policy</text>
     <text x="80" y="75" text-anchor="middle" class="description">CloudWatch logs</text>
   </g>
-  
+
   <!-- CloudWatch Logs -->
   <g transform="translate(880, 350)">
     <rect x="0" y="0" width="160" height="100" class="service-box" rx="8"/>
@@ -111,7 +111,7 @@
     <text x="80" y="65" text-anchor="middle" class="description">Monitoring</text>
     <text x="80" y="80" text-anchor="middle" class="description">Debugging</text>
   </g>
-  
+
   <!-- S3 Backend -->
   <g transform="translate(80, 350)">
     <rect x="0" y="0" width="160" height="100" class="service-box" rx="8"/>
@@ -123,7 +123,7 @@
     <text x="80" y="60" text-anchor="middle" class="description">Native locking</text>
     <text x="80" y="75" text-anchor="middle" class="description">Backend storage</text>
   </g>
-  
+
   <!-- Resource Groups -->
   <g transform="translate(880, 480)">
     <rect x="0" y="0" width="160" height="80" class="service-box" rx="8"/>
@@ -136,28 +136,28 @@
     <text x="80" y="45" text-anchor="middle" class="description">Environment tags</text>
     <text x="80" y="60" text-anchor="middle" class="description">Service grouping</text>
   </g>
-  
+
   <!-- Data Flow Arrows -->
   <!-- AWS Health to EventBridge -->
   <line x1="220" y1="170" x2="300" y2="240" class="data-flow"/>
   <text x="240" y="195" class="flow-text">Health Events</text>
-  
+
   <!-- EventBridge to Lambda -->
   <line x1="480" y1="270" x2="580" y2="400" class="data-flow"/>
   <text x="520" y="325" class="flow-text">Trigger</text>
-  
+
   <!-- Lambda to SNS -->
   <line x1="620" y1="510" x2="450" y2="580" class="data-flow"/>
   <text x="530" y="545" class="flow-text">Publish</text>
-  
+
   <!-- Lambda to CloudWatch -->
   <line x1="780" y1="430" x2="880" y2="400" class="arrow"/>
   <text x="820" y="410" class="flow-text">Logs</text>
-  
+
   <!-- Lambda to IAM (Permission relationship) -->
   <line x1="740" y1="350" x2="880" y2="280" class="arrow"/>
   <text x="800" y="310" class="flow-text">Uses</text>
-  
+
   <!-- Environment Badges -->
   <g transform="translate(50, 700)">
     <rect x="0" y="0" width="80" height="60" fill="#E8F4FD" stroke="#4A90B8" stroke-width="2" rx="6"/>
@@ -165,14 +165,14 @@
     <text x="40" y="35" text-anchor="middle" class="description">Development</text>
     <text x="40" y="50" text-anchor="middle" class="description">Environment</text>
   </g>
-  
+
   <g transform="translate(150, 700)">
     <rect x="0" y="0" width="80" height="60" fill="#FFE4E6" stroke="#FF7675" stroke-width="2" rx="6"/>
     <text x="40" y="20" text-anchor="middle" class="service-label">PROD</text>
     <text x="40" y="35" text-anchor="middle" class="description">Production</text>
     <text x="40" y="50" text-anchor="middle" class="description">Environment</text>
   </g>
-  
+
   <!-- Notification Subscribers -->
   <g transform="translate(100, 580)">
     <rect x="0" y="0" width="120" height="80" fill="#F0F8FF" stroke="#4169E1" stroke-width="2" rx="6"/>
@@ -183,11 +183,11 @@
     <text x="60" y="40" text-anchor="middle" class="description">• Email alerts</text>
     <text x="60" y="55" text-anchor="middle" class="description">• SMS notifications</text>
   </g>
-  
+
   <!-- SNS to Subscribers -->
   <line x1="300" y1="620" x2="220" y2="620" class="data-flow"/>
   <text x="250" y="610" class="flow-text">Notify</text>
-  
+
   <!-- Legend -->
   <g transform="translate(600, 700)">
     <text x="0" y="0" class="service-label">Architecture Features:</text>
@@ -196,5 +196,5 @@
     <text x="0" y="50" class="description">✓ Comprehensive error handling and fallback messaging</text>
     <text x="0" y="65" class="description">✓ AWS SDK v3 with Node.js 20.x runtime</text>
   </g>
-  
+
 </svg>

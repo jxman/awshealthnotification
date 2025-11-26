@@ -31,17 +31,17 @@ handle_error() {
 # Function to cleanup on exit
 cleanup() {
     echo -e "\n${YELLOW}Cleaning up...${NC}"
-    
+
     # Restore original EventBridge rule
     echo "Restoring original EventBridge rule..."
     aws events put-rule \
         --name "${ENVIRONMENT}-health-event-notifications" \
         --event-pattern "${ORIGINAL_PATTERN}" \
         --region "${REGION}" >/dev/null 2>&1 || echo "Warning: Failed to restore rule"
-    
+
     # Remove temporary files
     rm -f test-event-custom.json original-rule.json
-    
+
     echo -e "${GREEN}Cleanup completed${NC}"
 }
 
@@ -129,7 +129,7 @@ echo -e "\n${YELLOW}Step 7: Checking SNS topic status...${NC}"
 TOPIC_ARN=$(aws sns list-topics --query "Topics[?contains(TopicArn, '${ENVIRONMENT}-health-event-notifications')].TopicArn" --output text --region "${REGION}")
 if [ -n "$TOPIC_ARN" ]; then
     echo "SNS Topic: ${TOPIC_ARN}"
-    
+
     # Get subscription count
     SUB_COUNT=$(aws sns list-subscriptions-by-topic --topic-arn "${TOPIC_ARN}" --query 'Subscriptions[].Protocol' --output text --region "${REGION}" | wc -w)
     echo "Active subscriptions: ${SUB_COUNT}"

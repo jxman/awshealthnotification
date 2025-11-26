@@ -41,7 +41,7 @@
 
 ### **📂 Logical Grouping**
 - **Testing scripts** → `scripts/testing/`
-- **Utility scripts** → `scripts/utilities/`  
+- **Utility scripts** → `scripts/utilities/`
 - **Legacy scripts** → `scripts/legacy/`
 
 ### **🧹 Clean Root Directory**
@@ -67,7 +67,7 @@
 All existing script calls will continue to work:
 ```bash
 ./init.sh dev              # Still works
-./deploy.sh dev            # Still works  
+./deploy.sh dev            # Still works
 ./validate-backend.sh      # Still works
 ```
 

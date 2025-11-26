@@ -335,7 +335,7 @@ terraform apply -var-file="terraform.tfvars"
 # Test development environment
 ./test-health-notification.sh dev
 
-# Test production environment  
+# Test production environment
 ./test-health-notification.sh prod
 ```
 
@@ -353,7 +353,7 @@ terraform apply -var-file="terraform.tfvars"
 aws events put-events \
   --entries '[{
     "Source": "aws.health",
-    "DetailType": "AWS Health Event", 
+    "DetailType": "AWS Health Event",
     "Detail": "{\"service\":\"EC2\",\"statusCode\":\"open\"}"
   }]'
 ```

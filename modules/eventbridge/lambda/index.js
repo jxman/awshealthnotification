@@ -9,7 +9,7 @@ const snsClient = new SNSClient({});
 exports.handler = async (event, context) => {
   console.log('Event received:', JSON.stringify(event, null, 2));
   console.log('Lambda runtime:', process.version);
-  
+
   try {
     // Validate event structure
     if (!event.detail) {
@@ -29,10 +29,10 @@ exports.handler = async (event, context) => {
     const region = event.region || 'Unknown';
     const account = event.account || 'Unknown';
     const environment = process.env.ENVIRONMENT || 'UNKNOWN';
-    
+
     // Get status emoji
     const statusEmoji = getStatusEmoji(status);
-    
+
     // Create enhanced plain text message
     const enhancedMessage = formatHealthEvent({
       statusEmoji, environment, service, status, eventType, category,
@@ -48,14 +48,14 @@ exports.handler = async (event, context) => {
       Subject: subject,
       Message: enhancedMessage
     });
-    
+
     const result = await snsClient.send(command);
     console.log('Message published successfully:', result);
-    
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ 
-        message: 'Notification sent successfully', 
+      body: JSON.stringify({
+        message: 'Notification sent successfully',
         messageId: result.MessageId,
         runtime: process.version,
         environment
@@ -63,14 +63,14 @@ exports.handler = async (event, context) => {
     };
   } catch (error) {
     console.error('Error processing health event:', error);
-    
+
     // Send fallback notification
     try {
       await sendFallbackNotification(error, event);
     } catch (fallbackError) {
       console.error('Failed to send fallback notification:', fallbackError);
     }
-    
+
     throw error;
   }
 };
@@ -87,7 +87,7 @@ function getStatusEmoji(status) {
 function formatHealthEvent(params) {
   const { statusEmoji, environment, service, status, eventType, category,
           eventTime, startTime, endTime, description, eventArn, region, account } = params;
-  
+
   return `
 =====================================================================
             ${statusEmoji}  AWS HEALTH EVENT - ${environment} ENVIRONMENT  ${statusEmoji}
@@ -133,13 +133,13 @@ Timestamp: ${new Date().toISOString()}
 Original Event Summary:
 ${JSON.stringify(originalEvent, null, 2)}
     `;
-    
+
     const command = new PublishCommand({
       TopicArn: process.env.SNS_TOPIC_ARN,
       Subject: `🚨 ${process.env.ENVIRONMENT} - Lambda Processing Error`,
       Message: fallbackMessage
     });
-    
+
     await snsClient.send(command);
     console.log('Fallback notification sent');
   } catch (fallbackError) {

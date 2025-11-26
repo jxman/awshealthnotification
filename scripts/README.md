@@ -29,7 +29,7 @@ Backup and legacy scripts:
 # Run testing scripts
 ./scripts/testing/test-health-notification.sh dev
 
-# Run utility scripts  
+# Run utility scripts
 ./scripts/utilities/setup-summary.sh
 
 # Access legacy scripts
@@ -47,7 +47,7 @@ Backup and legacy scripts:
 
 Essential scripts remain in the root directory for easy access:
 - `init.sh` - Environment initialization
-- `deploy.sh` - Main deployment script  
+- `deploy.sh` - Main deployment script
 - `validate-backend.sh` - Configuration validation
 
 ## 🔄 Backward Compatibility
