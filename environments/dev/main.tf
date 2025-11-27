@@ -32,8 +32,8 @@ locals {
     BaseProject = "aws-health-notifications"
   }
 
-  # Use common_tags directly (no additional tags to merge)
-  resource_tags = local.common_tags
+  # Merge common tags with any additional tags from variable
+  resource_tags = merge(local.common_tags, var.tags)
 }
 
 module "sns" {

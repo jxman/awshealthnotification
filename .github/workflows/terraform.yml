@@ -134,6 +134,14 @@ jobs:
           path: environments/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}/plan.tfplan
           retention-days: 5
 
+      - name: Upload Lambda ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-zip
+          path: modules/eventbridge/lambda_function.zip
+          retention-days: 5
+          if-no-files-found: error
+
   apply:
     name: "Terraform Apply"
     needs: plan
@@ -194,6 +202,12 @@ jobs:
         with:
           name: tf-plan
           path: environments/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
+
+      - name: Download Lambda ZIP
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-zip
+          path: modules/eventbridge
 
       - name: Terraform Apply
         working-directory: environments/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}

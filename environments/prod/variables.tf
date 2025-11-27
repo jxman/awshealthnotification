@@ -21,3 +21,9 @@ variable "github_repo" {
   type        = string
   default     = "aws-health-notifications" # Replace with your actual repo name
 }
+
+variable "tags" {
+  description = "Additional tags to apply to all resources (merged with common_tags in main.tf)"
+  type        = map(string)
+  default     = {}
+}
