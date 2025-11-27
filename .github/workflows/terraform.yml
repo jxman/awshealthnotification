@@ -22,8 +22,58 @@ env:
   AWS_REGION: "us-east-1"
 
 jobs:
+  validate-lambda:
+    name: "Validate Lambda Code"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Lambda Syntax Check
+        run: |
+          echo "🔍 Validating Lambda function syntax..."
+          cd modules/eventbridge/lambda
+          node -c index.js
+          echo "✅ Lambda syntax is valid"
+
+      - name: Verify AWS SDK v3 Imports
+        run: |
+          echo "🔍 Checking AWS SDK v3 imports..."
+          cd modules/eventbridge/lambda
+          if ! grep -q "@aws-sdk/client-sns" index.js; then
+            echo "❌ Missing AWS SDK v3 imports"
+            exit 1
+          fi
+          echo "✅ AWS SDK v3 imports found"
+
+      - name: Check for Debug Code
+        run: |
+          echo "🔍 Checking for console.log statements..."
+          cd modules/eventbridge/lambda
+          LOG_COUNT=$(grep -c "console.log" index.js || true)
+          echo "📊 Found $LOG_COUNT console.log statements"
+          if [ $LOG_COUNT -gt 10 ]; then
+            echo "⚠️  Warning: High number of console.log statements ($LOG_COUNT)"
+            echo "   Consider removing debug logs for production"
+          fi
+
+      - name: Validate Lambda Handler
+        run: |
+          echo "🔍 Validating Lambda handler export..."
+          cd modules/eventbridge/lambda
+          if ! grep -q "exports.handler" index.js; then
+            echo "❌ Missing exports.handler"
+            exit 1
+          fi
+          echo "✅ Lambda handler export found"
+
   plan:
     name: "Terraform Plan"
+    needs: validate-lambda
     runs-on: ubuntu-latest
     environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
 

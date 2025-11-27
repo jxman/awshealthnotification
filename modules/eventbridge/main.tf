@@ -78,7 +78,12 @@ data "archive_file" "lambda_zip" {
     "__pycache__",
     ".DS_Store",
     "*.swp",
-    "*.tmp"
+    "*.tmp",
+    "*-debug.js", # Exclude debug files
+    "*.test.js",  # Exclude test files
+    "*.spec.js",  # Exclude spec files
+    "README.md",  # Exclude documentation
+    ".gitignore"  # Exclude git files
   ]
 }
 
