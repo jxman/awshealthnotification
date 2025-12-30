@@ -397,6 +397,43 @@ Check your email for the notification.
 aws s3 rm s3://your-bucket/health-notifications/dev/.terraform.lock
 ```
 
+### CloudWatch Log Group Already Exists
+
+**Symptoms**: Terraform deployment fails with error:
+```
+Error: creating CloudWatch Logs Log Group (/aws/lambda/dev-health-event-formatter):
+ResourceAlreadyExistsException: The specified log group already exists
+```
+
+**Cause**: Lambda functions previously created the log group automatically. Terraform now manages it explicitly but doesn't know about the existing resource.
+
+**Fix**:
+```bash
+# Delete existing log groups (for both dev and prod if needed)
+aws logs delete-log-group \
+  --log-group-name "/aws/lambda/dev-health-event-formatter" \
+  --region us-east-1
+
+aws logs delete-log-group \
+  --log-group-name "/aws/lambda/prod-health-event-formatter" \
+  --region us-east-1
+
+# Re-trigger GitHub Actions workflow
+gh workflow run "Terraform CI/CD" --ref main
+```
+
+**Why this works**: Terraform will recreate the log group with proper configuration:
+- 14-day retention policy (configurable)
+- Proper tagging
+- Explicit resource management
+
+**Alternative (if logs are critical)**: Import existing log group into Terraform state:
+```bash
+cd environments/dev
+terraform import module.eventbridge.aws_cloudwatch_log_group.lambda_logs \
+  /aws/lambda/dev-health-event-formatter
+```
+
 ## Maintenance
 
 ### Update Lambda Code
