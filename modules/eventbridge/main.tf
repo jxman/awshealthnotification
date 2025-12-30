@@ -7,7 +7,7 @@
  * ## Features
  *
  * - **EventBridge Rule**: Captures all AWS Health Events from aws.health source
- * - **Lambda Formatter**: Node.js 20.x function that formats events into human-readable notifications
+ * - **Lambda Formatter**: Node.js 22.x function that formats events into human-readable notifications
  * - **Environment Control**: Enable/disable notifications per environment without destroying resources
  * - **CloudWatch Logs**: Full logging integration for Lambda execution
  * - **Least-Privilege IAM**: Minimal permissions for Lambda execution (SNS publish + CloudWatch Logs)
@@ -21,7 +21,7 @@
  *
  * ## Lambda Function
  *
- * The Lambda function (Node.js 20.x) enhances AWS Health Event notifications with:
+ * The Lambda function (Node.js 22.x) enhances AWS Health Event notifications with:
  * - Formatted event summaries with severity indicators
  * - Affected resource details
  * - Event timeline information
@@ -93,7 +93,7 @@ resource "aws_lambda_function" "health_formatter" {
   description   = "Formats AWS Health Events into enhanced notifications for SNS distribution"
   role          = aws_iam_role.lambda_role.arn
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 30
   memory_size   = 128
 

@@ -214,24 +214,36 @@ Set up GitHub environments:
 - Create `dev` and `prod` environments
 - Configure protection rules for `prod`
 
-### 4. Initialize Development Environment
+### 4. Configure Environment Variables
+
+Copy and customize the environment configuration:
 
 ```bash
-# Make scripts executable
-chmod +x *.sh
+# Copy example tfvars
+cp environments/dev/terraform.tfvars.example environments/dev/terraform.tfvars
+cp environments/prod/terraform.tfvars.example environments/prod/terraform.tfvars
 
-# Initialize development environment
-./init.sh dev
+# Edit with your specific values
+vim environments/dev/terraform.tfvars
+vim environments/prod/terraform.tfvars
 ```
 
-### 5. Deploy
+### 5. Deploy via GitHub Actions
+
+**⚠️ IMPORTANT: Only deploy via GitHub Actions (never locally)**
 
 ```bash
-# Deploy to development
-./deploy.sh dev
+# Create feature branch
+git checkout -b feature/initial-setup
 
-# Or deploy via GitHub Actions
-git push origin main  # Auto-deploys to dev
+# Commit your tfvars changes
+git add environments/
+git commit -m "feat: configure initial environments"
+
+# Push and create PR
+git push origin feature/initial-setup
+
+# Create PR → Merge to main → Auto-deploys to dev
 ```
 
 ## ⚙️ Configuration
@@ -306,34 +318,53 @@ Subscriptions are managed manually via AWS Console for flexibility:
 
 ## 🚢 Deployment
 
-### Automated Deployment (Recommended)
+> **⚠️ CRITICAL: All deployments MUST be done via GitHub Actions**
+>
+> Local Terraform deployments are **PROHIBITED** to prevent:
+> - State conflicts between local and CI/CD environments
+> - Inconsistent tfvars configurations
+> - Bypassing deployment approvals and audit trail
+> - Breaking the automated deployment pipeline
+>
+> If you need to test Terraform locally, use `terraform plan` only (never `terraform apply`).
 
-**Development:**
+### GitHub Actions Deployment (REQUIRED)
+
+**Development Environment:**
 
 ```bash
-# Automatic on main branch push
-git push origin main
+# Automatic deployment on merge to main
+git checkout -b feature/my-changes
+# ... make changes ...
+git commit -m "feat: my changes"
+git push origin feature/my-changes
+# Create PR → Merge to main → Auto-deploys to dev
 ```
 
-**Production:**
+**Production Environment:**
 
 ```bash
-# Manual trigger with approval
-# Go to GitHub Actions → Run workflow → Select 'prod'
+# Manual workflow dispatch with approval gate
+# 1. Go to: GitHub → Actions → "Terraform CI/CD" workflow
+# 2. Click "Run workflow"
+# 3. Select environment: "prod"
+# 4. Click "Run workflow"
+# 5. Approve deployment when prompted
 ```
 
-### Manual Deployment
+### Local Testing (Plan Only)
+
+For local validation before pushing (optional):
 
 ```bash
-# Initialize
+# Initialize (read-only)
 cd environments/dev
 terraform init -backend-config=../../backend/dev.hcl
 
-# Plan
+# Plan only (safe - no changes applied)
 terraform plan -var-file="terraform.tfvars"
 
-# Apply
-terraform apply -var-file="terraform.tfvars"
+# NEVER run terraform apply locally
 ```
 
 ## 🧪 Testing
