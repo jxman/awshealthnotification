@@ -132,16 +132,19 @@ graph TB
 │       ├── outputs.tf            # Module outputs
 │       ├── versions.tf           # Terraform/provider versions
 │       └── README.md             # Module documentation
-├── 🚀 Scripts & Tools
-│   ├── deploy.sh                 # Deployment helper script
-│   ├── init.sh                   # Environment initialization
-│   ├── cleanup-project.sh        # 🧹 Project cleanup utility
-│   ├── test-health-notification.sh  # Health notification testing
-│   └── test-lambda-formatter.sh     # Lambda function testing
+├── 🧰 scripts/
+│   ├── testing/
+│   │   ├── test-health-notification.sh  # Test AWS Health notifications
+│   │   └── test-lambda-formatter.sh     # Test Lambda function locally
+│   └── utilities/
+│       ├── cleanup-project.sh    # Clean up generated Terraform files
+│       └── quick-cleanup.sh      # Quick cleanup utility
 ├── 📚 Documentation
 │   ├── README.md                 # This file
+│   ├── BOOTSTRAP.md              # Initial GitHub Actions setup guide
+│   ├── deployment.md             # GitHub Actions deployment procedures
 │   ├── TAGGING_STRATEGY.md       # Resource tagging guidelines
-│   ├── deployment.md             # Deployment procedures
+│   ├── CLAUDE.md                 # AI assistant project instructions
 │   ├── .pre-commit-config.yaml   # Pre-commit hooks config
 │   ├── .terraform-docs.yml       # Terraform-docs configuration
 │   ├── .trivyignore              # Trivy security exceptions
@@ -189,6 +192,8 @@ graph TB
 
 ## 🚀 Quick Start
 
+> **📘 For first-time setup, see [BOOTSTRAP.md](BOOTSTRAP.md) for detailed step-by-step instructions.**
+
 ### 1. Clone Repository
 
 ```bash
@@ -196,54 +201,39 @@ git clone https://github.com/your-org/aws-health-notifications.git
 cd aws-health-notifications
 ```
 
-### 2. Configure GitHub Secrets
+### 2. Complete Bootstrap Setup
 
-Navigate to your repository settings and add these secrets:
+Follow the comprehensive setup guide: **[BOOTSTRAP.md](BOOTSTRAP.md)**
 
-| Secret Name             | Description         | Example              |
-| ----------------------- | ------------------- | -------------------- |
-| `AWS_ACCESS_KEY_ID`     | AWS Access Key      | `AKIA...`            |
-| `AWS_SECRET_ACCESS_KEY` | AWS Secret Key      | `xxxx...`            |
-| `TF_STATE_BUCKET`       | S3 bucket for state | `my-terraform-state` |
+The bootstrap guide covers:
+- ✅ Creating AWS S3 backend bucket
+- ✅ Creating IAM user for GitHub Actions
+- ✅ Configuring GitHub Secrets
+- ✅ Setting up GitHub Environments (dev/prod)
+- ✅ Configuring environment variables
+- ✅ Initial deployment via GitHub Actions
+- ✅ Setting up SNS subscriptions
+- ✅ Testing the system
 
-### 3. Configure Environments
+### 3. Quick Deploy (After Bootstrap)
 
-Set up GitHub environments:
-
-- Navigate to **Settings** → **Environments**
-- Create `dev` and `prod` environments
-- Configure protection rules for `prod`
-
-### 4. Configure Environment Variables
-
-Copy and customize the environment configuration:
-
-```bash
-# Copy example tfvars
-cp environments/dev/terraform.tfvars.example environments/dev/terraform.tfvars
-cp environments/prod/terraform.tfvars.example environments/prod/terraform.tfvars
-
-# Edit with your specific values
-vim environments/dev/terraform.tfvars
-vim environments/prod/terraform.tfvars
-```
-
-### 5. Deploy via GitHub Actions
-
-**⚠️ IMPORTANT: Only deploy via GitHub Actions (never locally)**
+Once bootstrap is complete, deploy changes via GitHub Actions:
 
 ```bash
 # Create feature branch
-git checkout -b feature/initial-setup
+git checkout -b feature/my-changes
 
-# Commit your tfvars changes
-git add environments/
-git commit -m "feat: configure initial environments"
+# Make changes to code/configs
+# ...
+
+# Commit changes
+git add .
+git commit -m "feat: description of changes"
 
 # Push and create PR
-git push origin feature/initial-setup
+git push origin feature/my-changes
 
-# Create PR → Merge to main → Auto-deploys to dev
+# Merge PR → Auto-deploys to dev
 ```
 
 ## ⚙️ Configuration
@@ -373,17 +363,17 @@ terraform plan -var-file="terraform.tfvars"
 
 ```bash
 # Test development environment
-./test-health-notification.sh dev
+./scripts/testing/test-health-notification.sh dev
 
 # Test production environment
-./test-health-notification.sh prod
+./scripts/testing/test-health-notification.sh prod
 ```
 
-### Test Lambda Function
+### Test Lambda Function Locally
 
 ```bash
 # Test message formatting
-./test-lambda-formatter.sh
+./scripts/testing/test-lambda-formatter.sh
 ```
 
 ### Manual Testing
@@ -481,35 +471,45 @@ This project uses pre-commit hooks for code quality:
 
 ### Project Cleanup
 
-Use the built-in cleanup utility to remove generated files:
+Use the built-in cleanup utility to remove generated Terraform files:
 
 ```bash
 # Run the cleanup script
-./cleanup-project.sh
+./scripts/utilities/cleanup-project.sh
+
+# Or quick cleanup
+./scripts/utilities/quick-cleanup.sh
 ```
 
 This will safely remove:
 - Generated Terraform files (`.terraform/` directories)
-- Old state backup files
-- Temporary log files
-- Obsolete scripts
+- Terraform lock files
+- Lambda function ZIP archives
+- Temporary files
 
 ### Regular Maintenance Tasks
 
 - **Monthly**: Review and update dependencies
 - **Quarterly**: Security assessment and updates
-- **As needed**: Clean up old backup files and logs
+- **As needed**: Clean up generated files using cleanup scripts
 
 ### Terraform State Management
 
+State is managed automatically by GitHub Actions. For local validation:
+
 ```bash
-# Reinitialize Terraform if needed
+# Reinitialize Terraform (read-only)
 cd environments/dev
 terraform init -backend-config=../../backend/dev.hcl -reconfigure
 
-# Check state health
+# Check state health (read-only)
 terraform plan -var-file="terraform.tfvars"
+
+# Return to root
+cd ../..
 ```
+
+**⚠️ Remember: Never run `terraform apply` locally - use GitHub Actions**
 
 ## 🔍 Troubleshooting
 
@@ -560,10 +560,12 @@ aws logs filter-log-events \
 1. **Fork** the repository
 2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
 3. **Make** changes and test thoroughly
-4. **Run** cleanup: `./cleanup-project.sh` (if needed)
+4. **Run** cleanup: `./scripts/utilities/cleanup-project.sh` (if needed)
 5. **Commit** with conventional commits: `git commit -m 'feat: add amazing feature'`
 6. **Push** to branch: `git push origin feature/amazing-feature`
 7. **Create** a Pull Request
+8. **Review** automated Terraform plan in PR checks
+9. **Merge** after approval → Deploys to dev automatically
 
 ### Code Standards
 
@@ -624,10 +626,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Maintenance Schedule
 
-- **Regular Updates**: Monthly dependency updates
-- **Security Patches**: As needed
-- **Feature Releases**: Quarterly
-- **Cleanup**: Use `./cleanup-project.sh` as needed
+- **Regular Updates**: Monthly dependency updates via GitHub Actions
+- **Security Patches**: As needed via GitHub Actions
+- **Feature Releases**: Quarterly via GitHub Actions
+- **Cleanup**: Use `./scripts/utilities/cleanup-project.sh` for local cleanup as needed
 
 ---
 

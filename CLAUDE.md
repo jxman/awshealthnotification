@@ -16,12 +16,27 @@ This is a **Terraform-managed AWS Health Notifications Infrastructure** that aut
 AWS Health Events → EventBridge → Lambda Function → SNS Topic → Email/SMS
 ```
 
-### Environment Structure
+### Project Structure
 - `environments/dev/` - Development environment config
 - `environments/prod/` - Production environment config
 - `modules/` - Reusable Terraform modules (eventbridge, sns, resource_groups)
 - `backend/` - S3 backend configurations (*.hcl files)
 - `.github/workflows/terraform.yml` - CI/CD pipeline configuration
+- `scripts/testing/` - Testing utilities for validation
+- `scripts/utilities/` - Project maintenance utilities
+- `BOOTSTRAP.md` - Initial GitHub Actions setup guide
+- `deployment.md` - Deployment procedures documentation
+
+## 📘 Bootstrap & Setup
+
+For first-time setup, direct users to **[BOOTSTRAP.md](BOOTSTRAP.md)** which provides:
+- AWS S3 backend bucket creation
+- IAM user setup for GitHub Actions
+- GitHub Secrets configuration
+- GitHub Environments configuration
+- Initial deployment via GitHub Actions
+
+**No local deployment scripts exist** - all deployments are via GitHub Actions.
 
 ## ⚠️ CRITICAL DEPLOYMENT POLICY
 
@@ -90,11 +105,27 @@ terraform apply
 
 ### Testing & Verification
 ```bash
-# Test Lambda function locally
+# Test Lambda function syntax
 node -c modules/eventbridge/lambda/index.js
+
+# Test Lambda message formatting
+./scripts/testing/test-lambda-formatter.sh
+
+# Test AWS Health notifications (after deployment)
+./scripts/testing/test-health-notification.sh dev
+./scripts/testing/test-health-notification.sh prod
 
 # View deployment logs in GitHub Actions
 # Go to: Repository → Actions → Select workflow run
+```
+
+### Maintenance Utilities
+```bash
+# Clean up generated Terraform files
+./scripts/utilities/cleanup-project.sh
+
+# Quick cleanup of generated files
+./scripts/utilities/quick-cleanup.sh
 ```
 
 ## Key Architecture Details
