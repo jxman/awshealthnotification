@@ -181,6 +181,7 @@ No modules.
 |------|------|
 | [aws_cloudwatch_event_rule.health_events](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_rule) | resource |
 | [aws_cloudwatch_event_target.lambda_target](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_target) | resource |
+| [aws_cloudwatch_log_group.lambda_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_iam_role.lambda_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role_policy.lambda_logs_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
 | [aws_iam_role_policy.lambda_sns_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
@@ -194,6 +195,7 @@ No modules.
 |------|-------------|------|---------|:--------:|
 | <a name="input_enabled"></a> [enabled](#input\_enabled) | Enable or disable the EventBridge rule. When false, the rule exists but is in DISABLED state, preventing event processing without resource destruction. Useful for temporarily disabling notifications in non-prod environments. | `bool` | `true` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | Environment name (dev, staging, prod). Used for resource naming and tagging. Determines which environment's health events are captured. | `string` | n/a | yes |
+| <a name="input_log_retention_days"></a> [log\_retention\_days](#input\_log\_retention\_days) | Number of days to retain Lambda CloudWatch logs. Controls log storage costs and compliance requirements. Must be a valid CloudWatch Logs retention period. | `number` | `14` | no |
 | <a name="input_sns_topic_arn"></a> [sns\_topic\_arn](#input\_sns\_topic\_arn) | ARN of the SNS topic where formatted health event notifications will be published. Lambda function will publish to this topic after formatting the event. | `string` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Additional resource tags to apply to all resources created by this module. These tags are merged with default tags (Environment, Service, ManagedBy). | `map(string)` | `{}` | no |
 

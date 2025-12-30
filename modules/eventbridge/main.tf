@@ -87,6 +87,20 @@ data "archive_file" "lambda_zip" {
   ]
 }
 
+# Create CloudWatch Log Group with retention
+resource "aws_cloudwatch_log_group" "lambda_logs" {
+  name              = "/aws/lambda/${var.environment}-health-event-formatter"
+  retention_in_days = var.log_retention_days
+
+  tags = merge(
+    local.resource_tags,
+    {
+      Name       = "${var.environment}-lambda-logs"
+      SubService = "lambda-logs"
+    }
+  )
+}
+
 # Create the Lambda function with enhanced change detection
 resource "aws_lambda_function" "health_formatter" {
   function_name = "${var.environment}-health-event-formatter"
@@ -97,6 +111,9 @@ resource "aws_lambda_function" "health_formatter" {
   timeout       = 30
   memory_size   = 128
 
+  # Use ARM64 architecture for 20% cost savings on Graviton2 processors
+  architectures = ["arm64"]
+
   # Reference the ZIP file created by the archive_file data source
   filename         = data.archive_file.lambda_zip.output_path
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
@@ -104,12 +121,21 @@ resource "aws_lambda_function" "health_formatter" {
   # Publish a new version when code changes
   publish = true
 
+  # Advanced JSON logging configuration for better observability
+  logging_config {
+    log_format = "JSON"
+    log_group  = aws_cloudwatch_log_group.lambda_logs.name
+  }
+
   environment {
     variables = {
       ENVIRONMENT   = upper(var.environment)
       SNS_TOPIC_ARN = var.sns_topic_arn
     }
   }
+
+  # Ensure log group exists before Lambda function
+  depends_on = [aws_cloudwatch_log_group.lambda_logs]
 
   tags = merge(
     local.resource_tags,
@@ -166,7 +192,7 @@ resource "aws_iam_role_policy" "lambda_sns_policy" {
   })
 }
 
-# Attach CloudWatch Logs policy to the Lambda role
+# Attach CloudWatch Logs policy to the Lambda role with least-privilege access
 resource "aws_iam_role_policy" "lambda_logs_policy" {
   name = "${var.environment}-health-formatter-logs-policy"
   role = aws_iam_role.lambda_role.id
@@ -176,12 +202,12 @@ resource "aws_iam_role_policy" "lambda_logs_policy" {
     Statement = [
       {
         Action = [
-          "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-        Effect   = "Allow"
-        Resource = "arn:aws:logs:*:*:*"
+        Effect = "Allow"
+        # Restrict to specific log group and its log streams
+        Resource = "${aws_cloudwatch_log_group.lambda_logs.arn}:*"
       }
     ]
   })
