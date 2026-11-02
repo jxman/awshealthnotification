@@ -29,7 +29,7 @@
 ## Prerequisites
 
 - GitHub repository access with write permissions
-- Required GitHub secrets configured (see below)
+- Required GitHub secrets configured (see below). AWS access uses OIDC (no access keys); see [BOOTSTRAP.md](BOOTSTRAP.md#step-2-create-the-github-actions-oidc-role)
 - Appropriate environment permissions (dev: auto, prod: manual approval)
 
 ## Required GitHub Secrets
@@ -38,8 +38,6 @@ Configure these secrets in **Settings → Secrets and variables → Actions**:
 
 | Secret Name             | Description                  | Example                   |
 | ----------------------- | ---------------------------- | ------------------------- |
-| `AWS_ACCESS_KEY_ID`     | AWS Access Key for deployments | `AKIA...`                |
-| `AWS_SECRET_ACCESS_KEY` | AWS Secret Access Key        | `xxxx...`                 |
 | `TF_STATE_BUCKET`       | S3 bucket for Terraform state | `my-terraform-state-123` |
 
 ## GitHub Environments

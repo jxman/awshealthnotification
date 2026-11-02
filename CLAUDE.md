@@ -31,7 +31,7 @@ AWS Health Events → EventBridge → Lambda Function → SNS Topic → Email/SM
 
 For first-time setup, direct users to **[BOOTSTRAP.md](BOOTSTRAP.md)** which provides:
 - AWS S3 backend bucket creation
-- IAM user setup for GitHub Actions
+- GitHub Actions OIDC role (`scripts/oidc/bootstrap-oidc.sh`, policy in `scripts/oidc/github-actions-policy.json`; re-run the script and commit the JSON together when permissions change)
 - GitHub Secrets configuration
 - GitHub Environments configuration
 - Initial deployment via GitHub Actions

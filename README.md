@@ -164,31 +164,13 @@ graph TB
 ### AWS Resources
 
 - **S3 bucket** for Terraform state storage
-- **IAM user/role** with appropriate permissions
+- **GitHub Actions OIDC role** (`scripts/oidc/bootstrap-oidc.sh`)
 
 ### Permissions Required
 
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "events:*",
-        "lambda:*",
-        "sns:*",
-        "iam:*",
-        "logs:*",
-        "resource-groups:*",
-        "s3:GetObject",
-        "s3:PutObject"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-```
+GitHub Actions assumes `GithubActionsOIDC-AwsHealthNotification-Role` via OIDC. Its policy,
+[`scripts/oidc/github-actions-policy.json`](scripts/oidc/github-actions-policy.json), is limited
+to this project's resources.
 
 ## 🚀 Quick Start
 
@@ -207,7 +189,7 @@ Follow the comprehensive setup guide: **[BOOTSTRAP.md](BOOTSTRAP.md)**
 
 The bootstrap guide covers:
 - ✅ Creating AWS S3 backend bucket
-- ✅ Creating IAM user for GitHub Actions
+- ✅ Creating the GitHub Actions OIDC role
 - ✅ Configuring GitHub Secrets
 - ✅ Setting up GitHub Environments (dev/prod)
 - ✅ Configuring environment variables
