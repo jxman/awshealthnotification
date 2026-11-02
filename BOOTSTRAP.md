@@ -54,58 +54,31 @@ aws s3api put-public-access-block \
 
 **Note the bucket name** - you'll need it for GitHub Secrets.
 
-## Step 2: Create AWS IAM User for GitHub Actions
+## Step 2: Create the GitHub Actions OIDC Role
 
-Create a dedicated IAM user with appropriate permissions:
+GitHub Actions logs in to AWS with **OIDC**: each run gets short-lived credentials by assuming
+an IAM role, so no AWS access keys are stored in GitHub.
 
-```bash
-# Create IAM user
-aws iam create-user --user-name github-actions-terraform
-
-# Create access keys
-aws iam create-access-key --user-name github-actions-terraform
-```
-
-**Save the Access Key ID and Secret Access Key** - you'll need them for GitHub Secrets.
-
-### Attach IAM Policy
-
-Create a policy file `github-actions-policy.json`:
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "events:*",
-        "lambda:*",
-        "sns:*",
-        "iam:*",
-        "logs:*",
-        "resource-groups:*",
-        "s3:GetObject",
-        "s3:PutObject",
-        "s3:ListBucket"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-```
-
-Apply the policy:
+Run the bootstrap script once with admin credentials:
 
 ```bash
-# Create the policy
-aws iam put-user-policy \
-  --user-name github-actions-terraform \
-  --policy-name TerraformDeployment \
-  --policy-document file://github-actions-policy.json
+./scripts/oidc/bootstrap-oidc.sh
 ```
 
-**⚠️ For production, use more restrictive policies following least-privilege principles.**
+It is idempotent and creates or updates:
+
+- The GitHub OIDC provider (`token.actions.githubusercontent.com`), shared by every repo in the account
+- `GithubActions-AwsHealthNotification-Policy`, from
+  [`scripts/oidc/github-actions-policy.json`](scripts/oidc/github-actions-policy.json). It only
+  covers this project's resources: the `*-health-event-notifications` rule and topic, the
+  `*-health-event-formatter` function and log group, the `*-health-formatter-role` Lambda role,
+  the `*-health-notifications` resource group, and `health-notifications/*` in the state bucket
+- `GithubActionsOIDC-AwsHealthNotification-Role`, trusted only by `repo:jxman/awshealthnotification:*`
+
+The role ARN is set as `AWS_ROLE_ARN` at the top of `.github/workflows/terraform.yml`.
+
+**Changing permissions:** edit `github-actions-policy.json`, re-run the script (it publishes a new
+policy version when the file differs), and commit the file in the same change.
 
 ## Step 3: Configure GitHub Repository
 
@@ -119,8 +92,6 @@ Add these secrets:
 
 | Secret Name              | Value                              | Example                      |
 | ------------------------ | ---------------------------------- | ---------------------------- |
-| `AWS_ACCESS_KEY_ID`      | From Step 2 IAM user creation      | `AKIAIOSFODNN7EXAMPLE`       |
-| `AWS_SECRET_ACCESS_KEY`  | From Step 2 IAM user creation      | `wJalrXUtnFEMI/K7MDENG/...`  |
 | `TF_STATE_BUCKET`        | S3 bucket name from Step 1         | `my-terraform-state-bucket-123` |
 
 ### 3.2 Configure GitHub Environments
@@ -463,7 +434,7 @@ terraform import module.eventbridge.aws_cloudwatch_log_group.lambda_logs \
 ## Security Best Practices
 
 - ✅ Use least-privilege IAM policies
-- ✅ Rotate AWS credentials regularly
+- ✅ Use OIDC for GitHub Actions (no long-lived AWS access keys)
 - ✅ Enable S3 bucket encryption
 - ✅ Use GitHub environment protection rules for prod
 - ✅ Review all Terraform plans before applying

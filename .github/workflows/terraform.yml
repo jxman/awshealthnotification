@@ -30,22 +30,26 @@ on:
 
 permissions:
   contents: read
+  id-token: write # Required for OIDC (configure-aws-credentials)
   pull-requests: write
 
 env:
   AWS_REGION: "us-east-1"
+  # Created by scripts/oidc/bootstrap-oidc.sh; trusted only by this repository.
+  # Not a credential, so it lives here rather than in a secret
+  AWS_ROLE_ARN: "arn:aws:iam::600424110307:role/GithubActionsOIDC-AwsHealthNotification-Role"
 
 jobs:
   validate-lambda:
     name: "Validate Lambda Code"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '22' # matches the Lambda runtime (nodejs22.x)
 
       - name: Lambda Syntax Check
         run: |
@@ -92,17 +96,18 @@ jobs:
     environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: "1.10.1"
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # OIDC: short-lived credentials for this run, no stored access keys
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          role-session-name: GitHubActionsOIDCSession
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Terraform Files
@@ -142,14 +147,14 @@ jobs:
         run: terraform plan -out=plan.tfplan
 
       - name: Upload Plan
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tf-plan
           path: environments/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}/plan.tfplan
           retention-days: 5
 
       - name: Upload Lambda ZIP
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lambda-zip
           path: modules/eventbridge/lambda_function.zip
@@ -166,17 +171,18 @@ jobs:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: "1.10.1"
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # OIDC: short-lived credentials for this run, no stored access keys
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          role-session-name: GitHubActionsOIDCSession
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Terraform Files
@@ -212,13 +218,13 @@ jobs:
         run: terraform init -backend-config=../../backend.hcl
 
       - name: Download Plan
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: tf-plan
           path: environments/${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
 
       - name: Download Lambda ZIP
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: lambda-zip
           path: modules/eventbridge

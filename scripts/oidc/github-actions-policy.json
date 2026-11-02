@@ -1,0 +1,98 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "TerraformStateObjects",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::jxman-terraform-state-bucket/health-notifications/*"
+    },
+    {
+      "Sid": "TerraformStateList",
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::jxman-terraform-state-bucket",
+      "Condition": {
+        "StringLike": { "s3:prefix": ["health-notifications/*"] }
+      }
+    },
+    {
+      "Sid": "EventBridgeRule",
+      "Effect": "Allow",
+      "Action": "events:*",
+      "Resource": "arn:aws:events:us-east-1:*:rule/*-health-event-notifications"
+    },
+    {
+      "Sid": "SnsTopicAndSubscriptions",
+      "Effect": "Allow",
+      "Action": "sns:*",
+      "Resource": [
+        "arn:aws:sns:us-east-1:*:*-health-event-notifications",
+        "arn:aws:sns:us-east-1:*:*-health-event-notifications:*"
+      ]
+    },
+    {
+      "Sid": "LambdaFunction",
+      "Effect": "Allow",
+      "Action": "lambda:*",
+      "Resource": "arn:aws:lambda:us-east-1:*:function:*-health-event-formatter"
+    },
+    {
+      "Sid": "LambdaLogGroup",
+      "Effect": "Allow",
+      "Action": "logs:*",
+      "Resource": [
+        "arn:aws:logs:us-east-1:*:log-group:/aws/lambda/*-health-event-formatter",
+        "arn:aws:logs:us-east-1:*:log-group:/aws/lambda/*-health-event-formatter:*"
+      ]
+    },
+    {
+      "Sid": "LogGroupDiscovery",
+      "Effect": "Allow",
+      "Action": "logs:DescribeLogGroups",
+      "Resource": "*"
+    },
+    {
+      "Sid": "LambdaExecutionRole",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetRole",
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:UpdateRole",
+        "iam:UpdateAssumeRolePolicy",
+        "iam:TagRole",
+        "iam:UntagRole",
+        "iam:ListRoleTags",
+        "iam:GetRolePolicy",
+        "iam:PutRolePolicy",
+        "iam:DeleteRolePolicy",
+        "iam:ListRolePolicies",
+        "iam:ListAttachedRolePolicies",
+        "iam:ListInstanceProfilesForRole"
+      ],
+      "Resource": "arn:aws:iam::*:role/*-health-formatter-role"
+    },
+    {
+      "Sid": "PassLambdaExecutionRole",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::*:role/*-health-formatter-role",
+      "Condition": {
+        "StringEquals": { "iam:PassedToService": "lambda.amazonaws.com" }
+      }
+    },
+    {
+      "Sid": "ResourceGroup",
+      "Effect": "Allow",
+      "Action": "resource-groups:*",
+      "Resource": "arn:aws:resource-groups:us-east-1:*:group/*-health-notifications"
+    },
+    {
+      "Sid": "Identity",
+      "Effect": "Allow",
+      "Action": "sts:GetCallerIdentity",
+      "Resource": "*"
+    }
+  ]
+}
